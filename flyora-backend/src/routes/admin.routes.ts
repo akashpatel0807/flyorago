@@ -7,6 +7,7 @@ import {
   getBookingsList,
   getReviewsList,
   getWaitlistList,
+  getContactsList,
   getShipmentsList,
   adminLogin,
   updateAdminCredentials
@@ -21,6 +22,7 @@ router.get('/trips', getTripsList);
 router.get('/bookings', getBookingsList);
 router.get('/reviews', getReviewsList);
 router.get('/waitlist', getWaitlistList);
+router.get('/contacts', getContactsList);
 router.get('/shipments', getShipmentsList);
 router.post('/login', adminLogin);
 router.post('/update-credentials', updateAdminCredentials);

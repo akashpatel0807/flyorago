@@ -102,6 +102,17 @@ interface WaitlistEntry {
   createdAt: string;
 }
 
+interface ContactMessageEntry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  userType: string;
+  subject: string;
+  message: string;
+  createdAt: string;
+}
+
 interface StatsData {
   totalUsers: number;
   totalBookings: number;
@@ -111,6 +122,7 @@ interface StatsData {
   totalShipments: number;
   pendingKyc: number;
   waitlistCount: number;
+  contactCount: number;
 }
 
 interface ActivityItem {
@@ -135,6 +147,7 @@ const AdminDashboardPage: React.FC = () => {
     totalShipments: 0,
     pendingKyc: 0,
     waitlistCount: 0,
+    contactCount: 0,
   });
 
   // DB Lists
@@ -144,6 +157,7 @@ const AdminDashboardPage: React.FC = () => {
   const [bookingsList, setBookingsList] = useState<DBBooking[]>([]);
   const [reviewsList, setReviewsList] = useState<DBReview[]>([]);
   const [waitlistList, setWaitlistList] = useState<WaitlistEntry[]>([]);
+  const [contactList, setContactList] = useState<ContactMessageEntry[]>([]);
   const [kycSubmissions, setKycSubmissions] = useState<KycSubmission[]>([]);
 
   // Selected KYC detail
@@ -229,6 +243,13 @@ const AdminDashboardPage: React.FC = () => {
       if (waitlistRes.ok) {
         const json = await waitlistRes.json();
         setWaitlistList(json.data);
+      }
+
+      // 7.5 Contact Messages
+      const contactRes = await fetch(`${API_BASE_URL}/api/admin/contacts`);
+      if (contactRes.ok) {
+        const json = await contactRes.json();
+        setContactList(json.data);
       }
 
       // 8. KYC Submissions
@@ -417,6 +438,7 @@ const AdminDashboardPage: React.FC = () => {
     { id: 'bookings', label: 'Booking Matches', icon: Calendar },
     { id: 'reviews', label: 'User Reviews', icon: Star },
     { id: 'waitlist', label: 'Waitlist Signups', icon: ListFilter },
+    { id: 'contacts', label: 'Contact Messages', icon: Mail },
     { id: 'settings', label: 'System Settings', icon: Settings }
   ];
 
@@ -624,8 +646,8 @@ const AdminDashboardPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* 6 Real Database Stats Card Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {/* 7 Real Database Stats Card Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                     {[
                       {
                         title: 'Total Users',
@@ -674,6 +696,14 @@ const AdminDashboardPage: React.FC = () => {
                         detail: 'Waitlisted Pre-launch',
                         icon: ListFilter,
                         sparkline: [8, 12, 11, 15, 16, 18, 17, 20, 21, 24],
+                      },
+                      {
+                        title: 'Contact Messages',
+                        value: stats.contactCount,
+                        color: 'blue',
+                        detail: 'Inquiries Received',
+                        icon: Mail,
+                        sparkline: [4, 6, 8, 5, 9, 12, 10, 14, 11, 15],
                       },
                     ].map((card, i) => {
                       const Icon = card.icon;
@@ -1455,6 +1485,63 @@ const AdminDashboardPage: React.FC = () => {
                                   </span>
                                 </td>
                                 <td className="text-slate-400">{new Date(entry.createdAt).toLocaleDateString()}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
+              {/* ────────────────────────────────────────────────────────────────────────
+                  TAB H2: CONTACT MESSAGES
+                  ──────────────────────────────────────────────────────────────────────── */}
+              {activeTab === 'contacts' && (
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-black text-slate-800">Contact Form Messages</h1>
+                    <div className="text-[9px] text-slate-400 font-bold mt-1 uppercase flex items-center gap-1.5">
+                      <span>Admin</span> <span className="text-slate-300">/</span> <span className="text-slate-600">Contact Messages</span>
+                    </div>
+                  </div>
+
+                  <Card padding="none" className="p-4 bg-white border border-slate-100 rounded-3xl">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-[11px]">
+                        <thead>
+                          <tr className="border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider py-3">
+                            <th className="py-2.5">Date</th>
+                            <th>Name</th>
+                            <th>Email & Phone</th>
+                            <th>User Type</th>
+                            <th>Subject & Message</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
+                          {contactList.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="py-6 text-center text-slate-400 font-semibold">No contact messages.</td>
+                            </tr>
+                          ) : (
+                            contactList.map(entry => (
+                              <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="py-3 text-slate-400 font-bold">{new Date(entry.createdAt).toLocaleDateString()}</td>
+                                <td className="font-bold text-slate-800">{entry.name}</td>
+                                <td>
+                                  <div>{entry.email}</div>
+                                  <div className="text-slate-400 text-[10px] mt-0.5">{entry.phone || 'No phone'}</div>
+                                </td>
+                                <td>
+                                  <span className="capitalize font-bold text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-[9px]">
+                                    {entry.userType}
+                                  </span>
+                                </td>
+                                <td className="py-3 max-w-sm">
+                                  <div className="font-bold text-slate-800 mb-0.5">{entry.subject}</div>
+                                  <p className="text-slate-500 font-normal leading-relaxed whitespace-pre-wrap">{entry.message}</p>
+                                </td>
                               </tr>
                             ))
                           )}

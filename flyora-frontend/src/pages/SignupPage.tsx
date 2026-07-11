@@ -327,31 +327,6 @@ const SignupPage: React.FC = () => {
             </div>
           </form>
 
-          <div className="mt-8 mb-6 flex items-center justify-center gap-4">
-            <div className="h-px bg-gray-200 flex-1"></div>
-            <span className="text-xs text-gray-500 font-semibold">or sign up with</span>
-            <div className="h-px bg-gray-200 flex-1"></div>
-          </div>
-
-          <div className="flex gap-3">
-            <button className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-[14px] hover:bg-gray-50 transition-colors font-bold text-sm text-flyora-navy shadow-sm">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" className="w-5 h-5" />
-              Google
-            </button>
-            <button className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-[14px] hover:bg-gray-50 transition-colors font-bold text-sm text-flyora-navy shadow-sm">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" className="w-5 h-5" />
-              Apple
-            </button>
-            <button className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-[14px] hover:bg-gray-50 transition-colors font-bold text-sm text-flyora-navy shadow-sm">
-              <svg viewBox="0 0 23 23" className="w-4 h-4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="11" height="11" fill="#F25022" />
-                <rect x="12" width="11" height="11" fill="#7FBA00" />
-                <rect y="12" width="11" height="11" fill="#00A4EF" />
-                <rect x="12" y="12" width="11" height="11" fill="#FFB900" />
-              </svg>
-              Microsoft
-            </button>
-          </div>
 
           <p className="text-center mt-8 text-[13px] font-semibold text-gray-500">
             Already have an account?{' '}

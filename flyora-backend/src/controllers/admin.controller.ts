@@ -13,6 +13,7 @@ export const getAdminStats = async (_req: Request, res: Response): Promise<void>
     const shipmentsCountRes = await query('SELECT COUNT(*) as count FROM shipments');
     const pendingKycRes = await query("SELECT COUNT(*) as count FROM kyc_submissions WHERE status = 'PENDING'");
     const waitlistCountRes = await query('SELECT COUNT(*) as count FROM waitlist');
+    const contactMessagesCountRes = await query('SELECT COUNT(*) as count FROM contact_messages');
 
     const totalUsers = parseInt(usersCountRes.rows[0].count, 10);
     const totalBookings = parseInt(bookingsCountRes.rows[0].count, 10);
@@ -22,6 +23,7 @@ export const getAdminStats = async (_req: Request, res: Response): Promise<void>
     const totalShipments = parseInt(shipmentsCountRes.rows[0].count, 10);
     const pendingKyc = parseInt(pendingKycRes.rows[0].count, 10);
     const waitlistCount = parseInt(waitlistCountRes.rows[0].count, 10);
+    const contactCount = parseInt(contactMessagesCountRes.rows[0].count, 10);
 
     res.status(200).json({
       success: true,
@@ -36,6 +38,7 @@ export const getAdminStats = async (_req: Request, res: Response): Promise<void>
           totalShipments,
           pendingKyc,
           waitlistCount,
+          contactCount,
         }
       }
     });
@@ -231,6 +234,36 @@ export const getWaitlistList = async (_req: Request, res: Response): Promise<voi
     res.status(500).json({
       success: false,
       message: 'Error fetching waitlist list',
+      error: error.message,
+    });
+  }
+};
+
+// List all contact form messages
+export const getContactsList = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const contactsRes = await query(
+      `SELECT
+         id,
+         name,
+         email,
+         phone,
+         user_type as "userType",
+         subject,
+         message,
+         created_at as "createdAt"
+       FROM contact_messages
+       ORDER BY created_at DESC`
+    );
+
+    res.status(200).json({
+      success: true,
+      data: contactsRes.rows,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching contact messages list',
       error: error.message,
     });
   }

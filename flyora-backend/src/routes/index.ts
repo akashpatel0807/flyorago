@@ -2,6 +2,7 @@ import { Router } from 'express';
 import healthRoutes from './health.routes';
 import landingRoutes from './landing.routes';
 import waitlistRoutes from './waitlist.routes';
+import contactRoutes from './contact.routes';
 import authRoutes from './auth.routes';
 import kycRoutes from './kyc.routes';
 import dashboardRoutes from './dashboard.routes';
@@ -21,8 +22,9 @@ router.get('/stats', getStats);
 router.get('/routes', getRoutes);
 router.get('/features', getFeatures);
 
-// ─── Waitlist ─────────────────────────────────────────────────────────────────
+// ─── Waitlist & Contact ───────────────────────────────────────────────────────
 router.use('/waitlist', waitlistRoutes);
+router.use('/contact', contactRoutes);
 
 // ─── Auth & KYC ──────────────────────────────────────────────────────────────
 router.use('/auth', authRoutes);
