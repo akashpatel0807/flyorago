@@ -69,6 +69,22 @@ const runAutoMigrations = async (): Promise<void> => {
       console.log('  ✅  Default admin seeded (admin / adminpassword)');
     }
 
+    // 7. Create contact_messages table
+    await query(`
+      CREATE TABLE IF NOT EXISTS contact_messages (
+        id          UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
+        name        VARCHAR(150)    NOT NULL,
+        email       VARCHAR(255)    NOT NULL,
+        phone       VARCHAR(20),
+        user_type   VARCHAR(50)     NOT NULL,
+        subject     VARCHAR(255)    NOT NULL,
+        message     TEXT            NOT NULL,
+        created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+      );
+    `);
+    await query(`CREATE INDEX IF NOT EXISTS idx_contact_messages_email ON contact_messages(email);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages(created_at);`);
+
     console.log('  ✅  Auto-migrations completed successfully');
   } catch (error) {
     console.error('  ❌  Auto-migration error:', error);
