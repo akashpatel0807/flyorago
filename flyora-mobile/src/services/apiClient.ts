@@ -12,7 +12,7 @@ const getDevServerIP = () => {
       return `http://${host}:5000`;
     }
   }
-  return 'https://flyorago-backend-1.onrender.com'; // Production live URL fallback
+  return 'https://flyorago-backend-hzmx.onrender.com'; // Production live URL fallback
 };
 
 export const LOCAL_API_URL = getDevServerIP();
