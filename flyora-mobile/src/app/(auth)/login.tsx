@@ -108,10 +108,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Form Card */}
-          <Animated.View
-            entering={FadeInUp.delay(100).duration(600)}
-            style={styles.formCard}
-          >
+          <View style={styles.formCard}>
             {errorMsg ? (
               <Animated.View entering={FadeInDown} style={styles.errorAlert}>
                 <Text style={styles.errorAlertText}>{errorMsg}</Text>
@@ -213,7 +210,7 @@ export default function LoginScreen() {
                 <Text style={styles.signupLink}>Sign Up</Text>
               </Pressable>
             </View>
-          </Animated.View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
