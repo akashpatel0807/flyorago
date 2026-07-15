@@ -31,7 +31,7 @@ interface StyledInputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
-// Mockup-matching flat TextInput with stable local focus styling
+// Flat grey TextInput with stable local focus styling matching the mockup
 const StyledInput = ({
   placeholder,
   icon: Icon,
@@ -191,6 +191,7 @@ export default function SignupScreen() {
                 </Text>
               </View>
 
+              {/* Globe and Boxes Illustration for HD cover sizing */}
               <Image
                 source={require('../../../assets/images/onbording second screen.png')}
                 style={styles.headerImage}
@@ -346,12 +347,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topSection: {
-    height: height * 0.32,
+    height: height * 0.35,
     paddingTop: 16,
     paddingHorizontal: 24,
     position: 'relative',
     justifyContent: 'flex-end',
-    paddingBottom: 36,
+    paddingBottom: 40,
     backgroundColor: '#F0FDF8', // Soft green background
   },
   brandHeader: {
@@ -406,8 +407,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     bottom: -15,
-    width: width * 0.50,
-    height: height * 0.28,
+    width: width * 0.48,
+    height: height * 0.32,
     zIndex: 1,
   },
   formCard: {
@@ -417,7 +418,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 36,
     paddingBottom: 40,
-    marginTop: -24,
+    marginTop: -30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -12 },
     shadowOpacity: 0.03,
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
     borderRadius: 16,
     height: 56,
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
   phoneInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
     borderRadius: 16,
     height: 56,
