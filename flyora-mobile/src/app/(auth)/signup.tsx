@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,7 +10,6 @@ import {
   Platform,
   Image,
   Dimensions,
-  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,9 +17,91 @@ import { useAuthStore, useToastStore } from '../../store';
 import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
 import { ArrowLeft, User, Lock, Eye, EyeOff, Mail, Phone, CheckSquare, Square } from 'lucide-react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
+
+interface StyledInputProps {
+  label: string;
+  icon: React.ComponentType<any>;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+  secureTextEntry?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'url';
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+}
+
+// Self-contained Input component to isolate re-renders and keep keyboard stable
+const StyledInput = ({
+  label,
+  icon: Icon,
+  value,
+  onChangeText,
+  placeholder,
+  secureTextEntry,
+  keyboardType = 'default',
+  autoCapitalize = 'none',
+}: StyledInputProps) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const isPassword = secureTextEntry !== undefined;
+
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <View
+        style={[
+          styles.inputWrapper,
+          isFocused && styles.inputWrapperFocused,
+        ]}
+      >
+        <Icon
+          size={18}
+          color={isFocused ? Theme.colors.teal : Theme.colors['gray-400']}
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder={placeholder}
+          placeholderTextColor={Theme.colors['gray-400']}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={isPassword ? !showPassword : false}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+        />
+        {isPassword && (
+          <Pressable
+            onPress={() => setShowPassword(!showPassword)}
+            style={styles.eyeBtn}
+          >
+            {showPassword ? (
+              <Eye size={18} color={Theme.colors['gray-400']} />
+            ) : (
+              <EyeOff size={18} color={Theme.colors['gray-400']} />
+            )}
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+};
+
+// KeyboardAvoidingWrapper: Only wraps KeyboardAvoidingView on iOS to prevent Android soft-keyboard conflicts
+const KeyboardAvoidingWrapper = ({ children }: { children: React.ReactNode }) => {
+  if (Platform.OS === 'ios') {
+    return (
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        {children}
+      </KeyboardAvoidingView>
+    );
+  }
+  return <View style={{ flex: 1 }}>{children}</View>;
+};
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -32,31 +113,9 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [focusedField, setFocusedField] = useState<
-    'fullName' | 'email' | 'phone' | 'password' | 'confirmPassword' | null
-  >(null);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-
-  useEffect(() => {
-    const showListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setIsKeyboardVisible(true)
-    );
-    const hideListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setIsKeyboardVisible(false)
-    );
-
-    return () => {
-      showListener.remove();
-      hideListener.remove();
-    };
-  }, []);
 
   const handleSignup = async () => {
     if (!fullName || !email || !phone || !password || !confirmPassword) {
@@ -102,41 +161,35 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
+      <KeyboardAvoidingWrapper>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           bounces={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Header Section */}
-          <View style={[styles.topSection, isKeyboardVisible && { height: 70, justifyContent: 'center', paddingBottom: 0 }]}>
+          <View style={styles.topSection}>
             <View style={styles.headerRow}>
               <Pressable onPress={() => router.back()} style={styles.backBtn}>
                 <ArrowLeft size={24} color={Theme.colors.navy} />
               </Pressable>
             </View>
 
-            {!isKeyboardVisible && (
-              <View style={styles.titleContainer}>
-                <Text style={styles.welcomeText}>
-                  Create <Text style={{ color: Theme.colors.teal }}>Account</Text>
-                </Text>
-                <Text style={styles.subtitle}>
-                  Join Flyorago and start your{'\n'}smart shipping journey.
-                </Text>
-              </View>
-            )}
+            <View style={styles.titleContainer}>
+              <Text style={styles.welcomeText}>
+                Create <Text style={{ color: Theme.colors.teal }}>Account</Text>
+              </Text>
+              <Text style={styles.subtitle}>
+                Join Flyorago and start your{'\n'}smart shipping journey.
+              </Text>
+            </View>
 
-            {!isKeyboardVisible && (
-              <Image
-                source={require('../../../assets/images/girl1.png')}
-                style={styles.headerImage}
-                resizeMode="contain"
-              />
-            )}
+            <Image
+              source={require('../../../assets/images/girl1.png')}
+              style={styles.headerImage}
+              resizeMode="contain"
+            />
           </View>
 
           {/* Form Card */}
@@ -148,159 +201,59 @@ export default function SignupScreen() {
             ) : null}
 
             {/* Full Name Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  focusedField === 'fullName' && styles.inputWrapperFocused,
-                ]}
-              >
-                <User
-                  size={18}
-                  color={focusedField === 'fullName' ? Theme.colors.teal : Theme.colors['gray-400']}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your full name"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  onFocus={() => setFocusedField('fullName')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </View>
-            </View>
+            <StyledInput
+              key="signup-fullname"
+              label="Full Name"
+              icon={User}
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Enter your full name"
+            />
 
             {/* Email Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  focusedField === 'email' && styles.inputWrapperFocused,
-                ]}
-              >
-                <Mail
-                  size={18}
-                  color={focusedField === 'email' ? Theme.colors.teal : Theme.colors['gray-400']}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </View>
-            </View>
+            <StyledInput
+              key="signup-email"
+              label="Email Address"
+              icon={Mail}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
             {/* Phone Number Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  focusedField === 'phone' && styles.inputWrapperFocused,
-                ]}
-              >
-                <Phone
-                  size={18}
-                  color={focusedField === 'phone' ? Theme.colors.teal : Theme.colors['gray-400']}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your phone number"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  onFocus={() => setFocusedField('phone')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </View>
-            </View>
+            <StyledInput
+              key="signup-phone"
+              label="Phone Number"
+              icon={Phone}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Enter your phone number"
+              keyboardType="phone-pad"
+            />
 
             {/* Password Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  focusedField === 'password' && styles.inputWrapperFocused,
-                ]}
-              >
-                <Lock
-                  size={18}
-                  color={focusedField === 'password' ? Theme.colors.teal : Theme.colors['gray-400']}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Create a password"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
-                />
-                <Pressable
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeBtn}
-                >
-                  {showPassword ? (
-                    <Eye size={18} color={Theme.colors['gray-400']} />
-                  ) : (
-                    <EyeOff size={18} color={Theme.colors['gray-400']} />
-                  )}
-                </Pressable>
-              </View>
-            </View>
+            <StyledInput
+              key="signup-password"
+              label="Password"
+              icon={Lock}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Create a password"
+              secureTextEntry
+            />
 
             {/* Confirm Password Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  focusedField === 'confirmPassword' && styles.inputWrapperFocused,
-                ]}
-              >
-                <Lock
-                  size={18}
-                  color={focusedField === 'confirmPassword' ? Theme.colors.teal : Theme.colors['gray-400']}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Confirm your password"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
-                  onFocus={() => setFocusedField('confirmPassword')}
-                  onBlur={() => setFocusedField(null)}
-                />
-                <Pressable
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={styles.eyeBtn}
-                >
-                  {showConfirmPassword ? (
-                    <Eye size={18} color={Theme.colors['gray-400']} />
-                  ) : (
-                    <EyeOff size={18} color={Theme.colors['gray-400']} />
-                  )}
-                </Pressable>
-              </View>
-            </View>
+            <StyledInput
+              key="signup-confirmpassword"
+              label="Confirm Password"
+              icon={Lock}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm your password"
+              secureTextEntry
+            />
 
             {/* Terms and Conditions Checkbox */}
             <Pressable
@@ -342,7 +295,7 @@ export default function SignupScreen() {
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingWrapper>
     </SafeAreaView>
   );
 }
@@ -461,11 +414,6 @@ const styles = StyleSheet.create({
   inputWrapperFocused: {
     borderColor: Theme.colors.teal,
     backgroundColor: Theme.colors.white,
-    shadowColor: Theme.colors.teal,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
   },
   inputIcon: {
     marginRight: 12,
@@ -516,49 +464,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: Theme.colors.white,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E2E8F0',
-  },
-  dividerText: {
-    fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 12,
-    color: '#94A3B8',
-    paddingHorizontal: 16,
-  },
-  socialRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 32,
-  },
-  socialBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: Theme.colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-  },
-  socialIcon: {
-    width: 20,
-    height: 20,
-  },
-  socialBtnText: {
-    fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 14,
-    color: Theme.colors.navy,
-    fontWeight: '600',
   },
   loginRow: {
     flexDirection: 'row',
