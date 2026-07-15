@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,56 +16,82 @@ import { useRouter } from 'expo-router';
 import { useAuthStore, useToastStore } from '../../store';
 import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
-import { User, Lock, Eye, EyeOff } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Lock, Eye, EyeOff } from 'lucide-react-native';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
-interface StyledInputProps {
+interface FloatingLabelInputProps {
   label: string;
-  icon: React.ComponentType<any>;
   value: string;
   onChangeText: (text: string) => void;
-  placeholder: string;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'url';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
-// Self-contained Input component to isolate re-renders and keep keyboard stable
-const StyledInput = ({
+// Google/Microsoft-style sleek Floating Label Input with professional border radius
+const FloatingLabelInput = ({
   label,
-  icon: Icon,
   value,
   onChangeText,
-  placeholder,
   secureTextEntry,
   keyboardType = 'default',
   autoCapitalize = 'none',
-}: StyledInputProps) => {
+}: FloatingLabelInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
   const isPassword = secureTextEntry !== undefined;
 
+  const animatedValue = useSharedValue(value ? 1 : 0);
+
+  useEffect(() => {
+    animatedValue.value = withTiming((isFocused || value) ? 1 : 0, { duration: 150 });
+  }, [isFocused, value]);
+
+  const labelStyle = useAnimatedStyle(() => {
+    const translateY = interpolate(animatedValue.value, [0, 1], [18, -8]);
+    const scale = interpolate(animatedValue.value, [0, 1], [1, 0.82]);
+    const left = interpolate(animatedValue.value, [0, 1], [16, 12]);
+
+    return {
+      transform: [
+        { translateY },
+        { scale },
+      ],
+      left,
+    };
+  });
+
   return (
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={styles.floatingInputGroup}>
+      <Animated.Text
+        style={[
+          styles.floatingLabel,
+          labelStyle,
+          {
+            color: isFocused ? Theme.colors.teal : '#64748B',
+            backgroundColor: isFocused || value ? '#FFFFFF' : 'transparent',
+            paddingHorizontal: isFocused || value ? 4 : 0,
+          },
+        ]}
+      >
+        {label}
+      </Animated.Text>
       <View
         style={[
           styles.inputWrapper,
           isFocused && styles.inputWrapperFocused,
         ]}
       >
-        <Icon
-          size={18}
-          color={isFocused ? Theme.colors.teal : Theme.colors['gray-400']}
-          style={styles.inputIcon}
-        />
         <TextInput
           style={styles.input}
-          placeholder={placeholder}
-          placeholderTextColor={Theme.colors['gray-400']}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={isPassword ? !showPassword : false}
@@ -80,9 +106,9 @@ const StyledInput = ({
             style={styles.eyeBtn}
           >
             {showPassword ? (
-              <Eye size={18} color={Theme.colors['gray-400']} />
+              <Eye size={18} color="#64748B" />
             ) : (
-              <EyeOff size={18} color={Theme.colors['gray-400']} />
+              <EyeOff size={18} color="#64748B" />
             )}
           </Pressable>
         )}
@@ -162,7 +188,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.mainContainer}>
-            {/* Header Section */}
+            {/* Original Header Section with Girl Illustration */}
             <View style={styles.topSection}>
               <Animated.View
                 entering={FadeInDown.delay(100).duration(600).springify()}
@@ -184,7 +210,7 @@ export default function LoginScreen() {
               />
             </View>
 
-            {/* Form Section */}
+            {/* Google/Microsoft-style sleek Form Container */}
             <View style={styles.formCard}>
               {errorMsg ? (
                 <Animated.View entering={FadeInDown} style={styles.errorAlert}>
@@ -194,33 +220,27 @@ export default function LoginScreen() {
 
               {/* Email Field */}
               <Animated.View entering={FadeInDown.delay(200).duration(600).springify()}>
-                <StyledInput
-                  key="login-email"
+                <FloatingLabelInput
                   label="Email or Phone Number"
-                  icon={User}
                   value={email}
                   onChangeText={setEmail}
-                  placeholder="Enter your email or phone"
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
               </Animated.View>
 
               {/* Password Field */}
-              <Animated.View entering={FadeInDown.delay(300).duration(600).springify()}>
-                <StyledInput
-                  key="login-password"
+              <Animated.View entering={FadeInDown.delay(250).duration(600).springify()}>
+                <FloatingLabelInput
                   label="Password"
-                  icon={Lock}
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="Enter your password"
                   secureTextEntry
                 />
               </Animated.View>
 
               {/* Forgot Password */}
-              <Animated.View entering={FadeInDown.delay(350).duration(600).springify()}>
+              <Animated.View entering={FadeInDown.delay(300).duration(600).springify()}>
                 <Pressable
                   style={styles.forgotBtn}
                   onPress={() => router.push('/(auth)/forgot-password')}
@@ -230,7 +250,7 @@ export default function LoginScreen() {
               </Animated.View>
 
               {/* Login Button */}
-              <Animated.View entering={FadeInDown.delay(400).duration(600).springify()}>
+              <Animated.View entering={FadeInDown.delay(350).duration(600).springify()}>
                 <Pressable
                   style={({ pressed }) => [
                     styles.loginBtn,
@@ -247,7 +267,7 @@ export default function LoginScreen() {
               </Animated.View>
 
               {/* Signup Link */}
-              <Animated.View entering={FadeInDown.delay(450).duration(600).springify()}>
+              <Animated.View entering={FadeInDown.delay(400).duration(600).springify()}>
                 <View style={styles.signupRow}>
                   <Text style={styles.signupText}>Don't have an account? </Text>
                   <Pressable onPress={() => router.push('/(auth)/signup')}>
@@ -257,22 +277,6 @@ export default function LoginScreen() {
               </Animated.View>
             </View>
           </View>
-
-          {/* Bottom Brand Watermark */}
-          <Animated.View
-            entering={FadeInDown.delay(500).duration(800).springify()}
-            style={styles.brandContainer}
-          >
-            <Text style={styles.brandFromText}>from</Text>
-            <View style={styles.brandLogoRow}>
-              <Image
-                source={require('../../../assets/images/flyorago-splash.png')}
-                style={styles.brandLogo}
-                resizeMode="contain"
-              />
-              <Text style={styles.brandNameText}>FLYORAGO</Text>
-            </View>
-          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingWrapper>
     </SafeAreaView>
@@ -286,24 +290,23 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
   },
   mainContainer: {
     flex: 1,
   },
   topSection: {
-    height: height * 0.28,
+    height: height * 0.30,
     paddingTop: 24,
     paddingHorizontal: 28,
     position: 'relative',
     justifyContent: 'flex-end',
-    paddingBottom: 16,
+    paddingBottom: 20,
     backgroundColor: '#FFFFFF',
   },
   titleContainer: {
     zIndex: 2,
-    maxWidth: '65%',
+    maxWidth: '62%',
     marginBottom: 8,
   },
   welcomeText: {
@@ -322,9 +325,9 @@ const styles = StyleSheet.create({
   headerImage: {
     position: 'absolute',
     right: -10,
-    bottom: -10,
+    bottom: -15,
     width: width * 0.55,
-    height: height * 0.25,
+    height: height * 0.26,
     zIndex: 1,
   },
   formCard: {
@@ -332,12 +335,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 28,
     paddingTop: 16,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   errorAlert: {
     backgroundColor: '#FEE2E2',
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 12,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#FCA5A5',
@@ -349,33 +352,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
-  inputGroup: {
+  floatingInputGroup: {
+    position: 'relative',
     marginBottom: 20,
+    width: '100%',
   },
-  label: {
-    fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 13,
-    color: Theme.colors.navy,
-    marginBottom: 8,
-    marginLeft: 4,
-    fontWeight: '600',
+  floatingLabel: {
+    position: 'absolute',
+    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: 14,
+    zIndex: 10,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 18,
+    borderColor: '#CBD5E1', // Clean grey border like Google
+    borderRadius: 12, // Professional sleek radius
     height: 56,
     paddingHorizontal: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   inputWrapperFocused: {
-    borderColor: Theme.colors.teal,
-    backgroundColor: Theme.colors.white,
-  },
-  inputIcon: {
-    marginRight: 12,
+    borderColor: Theme.colors.teal, // Accent border on focus
+    borderWidth: 2,
   },
   input: {
     flex: 1,
@@ -383,6 +383,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.navy,
     height: '100%',
+    paddingTop: Platform.OS === 'ios' ? 0 : 4,
   },
   eyeBtn: {
     padding: 8,
@@ -400,15 +401,15 @@ const styles = StyleSheet.create({
   loginBtn: {
     backgroundColor: Theme.colors.teal,
     height: 56,
-    borderRadius: 18,
+    borderRadius: 12, // Sleek button border radius
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
     shadowColor: Theme.colors.teal,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   loginBtnText: {
     fontFamily: Theme.typography.h3.fontFamily,
@@ -431,36 +432,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.teal,
     fontWeight: 'bold',
-  },
-  brandContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 24,
-    marginTop: 20,
-    backgroundColor: '#FFFFFF',
-  },
-  brandFromText: {
-    fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 11,
-    color: '#94A3B8',
-    marginBottom: 4,
-    letterSpacing: 0.5,
-    textTransform: 'lowercase',
-  },
-  brandLogoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  brandLogo: {
-    width: 20,
-    height: 20,
-  },
-  brandNameText: {
-    fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Theme.colors.teal,
-    letterSpacing: 1.5,
   },
 });

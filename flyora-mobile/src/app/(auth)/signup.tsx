@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,56 +16,82 @@ import { useRouter } from 'expo-router';
 import { useAuthStore, useToastStore } from '../../store';
 import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
-import { ArrowLeft, User, Lock, Eye, EyeOff, Mail, Phone, CheckSquare, Square } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ArrowLeft, Eye, EyeOff, CheckSquare, Square } from 'lucide-react-native';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
-interface StyledInputProps {
+interface FloatingLabelInputProps {
   label: string;
-  icon: React.ComponentType<any>;
   value: string;
   onChangeText: (text: string) => void;
-  placeholder: string;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'url';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
-// Self-contained Input component to isolate re-renders and keep keyboard stable
-const StyledInput = ({
+// Google/Microsoft-style sleek Floating Label Input with professional border radius
+const FloatingLabelInput = ({
   label,
-  icon: Icon,
   value,
   onChangeText,
-  placeholder,
   secureTextEntry,
   keyboardType = 'default',
   autoCapitalize = 'none',
-}: StyledInputProps) => {
+}: FloatingLabelInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
   const isPassword = secureTextEntry !== undefined;
 
+  const animatedValue = useSharedValue(value ? 1 : 0);
+
+  useEffect(() => {
+    animatedValue.value = withTiming((isFocused || value) ? 1 : 0, { duration: 150 });
+  }, [isFocused, value]);
+
+  const labelStyle = useAnimatedStyle(() => {
+    const translateY = interpolate(animatedValue.value, [0, 1], [18, -8]);
+    const scale = interpolate(animatedValue.value, [0, 1], [1, 0.82]);
+    const left = interpolate(animatedValue.value, [0, 1], [16, 12]);
+
+    return {
+      transform: [
+        { translateY },
+        { scale },
+      ],
+      left,
+    };
+  });
+
   return (
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={styles.floatingInputGroup}>
+      <Animated.Text
+        style={[
+          styles.floatingLabel,
+          labelStyle,
+          {
+            color: isFocused ? Theme.colors.teal : '#64748B',
+            backgroundColor: isFocused || value ? '#FFFFFF' : 'transparent',
+            paddingHorizontal: isFocused || value ? 4 : 0,
+          },
+        ]}
+      >
+        {label}
+      </Animated.Text>
       <View
         style={[
           styles.inputWrapper,
           isFocused && styles.inputWrapperFocused,
         ]}
       >
-        <Icon
-          size={18}
-          color={isFocused ? Theme.colors.teal : Theme.colors['gray-400']}
-          style={styles.inputIcon}
-        />
         <TextInput
           style={styles.input}
-          placeholder={placeholder}
-          placeholderTextColor={Theme.colors['gray-400']}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={isPassword ? !showPassword : false}
@@ -80,9 +106,9 @@ const StyledInput = ({
             style={styles.eyeBtn}
           >
             {showPassword ? (
-              <Eye size={18} color={Theme.colors['gray-400']} />
+              <Eye size={18} color="#64748B" />
             ) : (
-              <EyeOff size={18} color={Theme.colors['gray-400']} />
+              <EyeOff size={18} color="#64748B" />
             )}
           </Pressable>
         )}
@@ -169,7 +195,7 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.mainContainer}>
-            {/* Header Section */}
+            {/* Header Section with original Back Button and illustration layout */}
             <View style={styles.topSection}>
               <View style={styles.headerRow}>
                 <Pressable onPress={() => router.replace('/(auth)/login')} style={styles.backBtn}>
@@ -197,7 +223,7 @@ export default function SignupScreen() {
               />
             </View>
 
-            {/* Form Section */}
+            {/* Google/Microsoft-style sleek Form Container */}
             <View style={styles.formCard}>
               {errorMsg ? (
                 <Animated.View entering={FadeInDown} style={styles.errorAlert}>
@@ -207,25 +233,21 @@ export default function SignupScreen() {
 
               {/* Full Name Field */}
               <Animated.View entering={FadeInDown.delay(200).duration(600).springify()}>
-                <StyledInput
+                <FloatingLabelInput
                   key="signup-fullname"
                   label="Full Name"
-                  icon={User}
                   value={fullName}
                   onChangeText={setFullName}
-                  placeholder="Enter your full name"
                 />
               </Animated.View>
 
               {/* Email Field */}
               <Animated.View entering={FadeInDown.delay(250).duration(600).springify()}>
-                <StyledInput
+                <FloatingLabelInput
                   key="signup-email"
                   label="Email Address"
-                  icon={Mail}
                   value={email}
                   onChangeText={setEmail}
-                  placeholder="Enter your email"
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
@@ -233,39 +255,33 @@ export default function SignupScreen() {
 
               {/* Phone Number Field */}
               <Animated.View entering={FadeInDown.delay(300).duration(600).springify()}>
-                <StyledInput
+                <FloatingLabelInput
                   key="signup-phone"
                   label="Phone Number"
-                  icon={Phone}
                   value={phone}
                   onChangeText={setPhone}
-                  placeholder="Enter your phone number"
                   keyboardType="phone-pad"
                 />
               </Animated.View>
 
               {/* Password Field */}
               <Animated.View entering={FadeInDown.delay(350).duration(600).springify()}>
-                <StyledInput
+                <FloatingLabelInput
                   key="signup-password"
                   label="Password"
-                  icon={Lock}
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="Create a password"
                   secureTextEntry
                 />
               </Animated.View>
 
               {/* Confirm Password Field */}
               <Animated.View entering={FadeInDown.delay(400).duration(600).springify()}>
-                <StyledInput
+                <FloatingLabelInput
                   key="signup-confirmpassword"
                   label="Confirm Password"
-                  icon={Lock}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  placeholder="Confirm your password"
                   secureTextEntry
                 />
               </Animated.View>
@@ -316,22 +332,6 @@ export default function SignupScreen() {
               </Animated.View>
             </View>
           </View>
-
-          {/* Bottom Brand Watermark */}
-          <Animated.View
-            entering={FadeInDown.delay(600).duration(800).springify()}
-            style={styles.brandContainer}
-          >
-            <Text style={styles.brandFromText}>from</Text>
-            <View style={styles.brandLogoRow}>
-              <Image
-                source={require('../../../assets/images/flyorago-splash.png')}
-                style={styles.brandLogo}
-                resizeMode="contain"
-              />
-              <Text style={styles.brandNameText}>FLYORAGO</Text>
-            </View>
-          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingWrapper>
     </SafeAreaView>
@@ -345,7 +345,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
   },
   mainContainer: {
@@ -405,15 +404,16 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   formCard: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 28,
     paddingTop: 16,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   errorAlert: {
     backgroundColor: '#FEE2E2',
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 12,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#FCA5A5',
@@ -425,33 +425,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
-  inputGroup: {
+  floatingInputGroup: {
+    position: 'relative',
     marginBottom: 20,
+    width: '100%',
   },
-  label: {
-    fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 13,
-    color: Theme.colors.navy,
-    marginBottom: 8,
-    marginLeft: 4,
-    fontWeight: '600',
+  floatingLabel: {
+    position: 'absolute',
+    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: 14,
+    zIndex: 10,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 18,
+    borderColor: '#CBD5E1', // Clean grey border like Google
+    borderRadius: 12, // Professional sleek radius
     height: 56,
     paddingHorizontal: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   inputWrapperFocused: {
-    borderColor: Theme.colors.teal,
-    backgroundColor: Theme.colors.white,
-  },
-  inputIcon: {
-    marginRight: 12,
+    borderColor: Theme.colors.teal, // Accent border on focus
+    borderWidth: 2,
   },
   input: {
     flex: 1,
@@ -459,6 +456,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.navy,
     height: '100%',
+    paddingTop: Platform.OS === 'ios' ? 0 : 4,
   },
   eyeBtn: {
     padding: 8,
@@ -484,15 +482,15 @@ const styles = StyleSheet.create({
   signupBtn: {
     backgroundColor: Theme.colors.teal,
     height: 56,
-    borderRadius: 18,
+    borderRadius: 12, // Sleek button border radius
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
     shadowColor: Theme.colors.teal,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   signupBtnText: {
     fontFamily: Theme.typography.h3.fontFamily,
@@ -515,36 +513,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.teal,
     fontWeight: 'bold',
-  },
-  brandContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 24,
-    marginTop: 20,
-    backgroundColor: '#FFFFFF',
-  },
-  brandFromText: {
-    fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 11,
-    color: '#94A3B8',
-    marginBottom: 4,
-    letterSpacing: 0.5,
-    textTransform: 'lowercase',
-  },
-  brandLogoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  brandLogo: {
-    width: 20,
-    height: 20,
-  },
-  brandNameText: {
-    fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Theme.colors.teal,
-    letterSpacing: 1.5,
   },
 });
