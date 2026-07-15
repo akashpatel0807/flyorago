@@ -4,7 +4,7 @@
     "slug": "flyora-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/flyora logo png.png",
+    "icon": "./assets/images/flyorago-icon.png",
     "scheme": "flyoragomobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
       "bundleIdentifier": "com.flyorago.app"
     },
     "splash": {
-      "image": "./assets/images/flyora logo png.png",
+      "image": "./assets/images/flyorago-splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -21,12 +21,12 @@
       "package": "com.flyorago.app",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
-        "foregroundImage": "./assets/images/flyora logo png.png"
+        "foregroundImage": "./assets/images/flyorago-icon.png"
       }
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/flyora logo png.png"
+      "favicon": "./assets/images/flyorago-icon.png"
     },
     "plugins": [
       "expo-router",
@@ -34,7 +34,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
-          "image": "./assets/images/flyora logo png.png",
+          "image": "./assets/images/flyorago-splash.png",
           "imageWidth": 200
         }
       ],

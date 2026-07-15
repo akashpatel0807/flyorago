@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import createApp from './app';
 import { env } from './config/env';
 import { query } from './services/db.service';
@@ -6,6 +8,31 @@ import { query } from './services/db.service';
 const runAutoMigrations = async (): Promise<void> => {
   console.log('  🔄  Running auto-migrations...');
   try {
+    // Check if users table exists. If not, run schema.sql first
+    const tableCheck = await query(`
+      SELECT EXISTS (
+        SELECT FROM pg_tables 
+        WHERE schemaname = 'public' 
+        AND tablename  = 'users'
+      );
+    `);
+    
+    if (!tableCheck.rows[0].exists) {
+      console.log('  🔄  Fresh database detected. Initializing database schema from schema.sql...');
+      let schemaPath = path.join(__dirname, 'database', 'schema.sql');
+      if (!fs.existsSync(schemaPath)) {
+        schemaPath = path.join(process.cwd(), 'src', 'database', 'schema.sql');
+      }
+      
+      if (fs.existsSync(schemaPath)) {
+        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+        await query(schemaSql);
+        console.log('  ✅  Database schema initialized successfully from schema.sql');
+      } else {
+        console.warn('  ⚠️  schema.sql not found at ' + schemaPath + '. Skipping initial schema setup.');
+      }
+    }
+
     // 1. Add wallet_balance to users table
     await query(`
       ALTER TABLE users 

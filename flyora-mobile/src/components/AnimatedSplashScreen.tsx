@@ -45,7 +45,7 @@ export const AnimatedSplashScreen = ({ onAnimationComplete }: Props) => {
     width,
     height,
     zIndex: 99999, // Ensure it covers everything
-    backgroundColor: '#28806A', // Match the app.json splash color
+    backgroundColor: '#ffffff', // Match the app.json splash color
     justifyContent: 'center',
     alignItems: 'center',
   }));
@@ -62,7 +62,7 @@ export const AnimatedSplashScreen = ({ onAnimationComplete }: Props) => {
   return (
     <Animated.View style={containerStyle} pointerEvents="none">
       <Animated.Image
-        source={require('../../assets/images/flyora logo png.png')}
+        source={require('../../assets/images/flyorago-splash.png')}
         style={logoStyle}
         resizeMode="contain"
       />

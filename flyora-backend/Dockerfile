@@ -26,6 +26,9 @@ RUN npm ci --only=production
 # Copy compiled JavaScript from builder stage
 COPY --from=builder /usr/src/app/dist ./dist
 
+# Copy schema.sql for automatic startup database initialization
+COPY --from=builder /usr/src/app/src/database/schema.sql ./dist/database/schema.sql
+
 # Expose backend port
 EXPOSE 5000
 

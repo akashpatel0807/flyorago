@@ -10,14 +10,13 @@ import {
   Platform,
   Image,
   Dimensions,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore, useToastStore } from '../../store';
-import { apiClient, setApiBaseUrl, LOCAL_API_URL } from '../../services/apiClient';
+import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
-import { ArrowLeft, User, Lock, Eye, EyeOff, Server } from 'lucide-react-native';
+import { ArrowLeft, User, Lock, Eye, EyeOff } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
@@ -32,15 +31,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [tempApiUrl, setTempApiUrl] = useState('');
-
-  const handleConfigureServer = () => {
-    const currentUrl = apiClient.defaults.baseURL || '';
-    setTempApiUrl(currentUrl);
-    setShowConfigModal(true);
-  };
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -83,18 +74,20 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces={false}>
-          
-          {/* Header & Image Section */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          {/* Header Section */}
           <View style={styles.topSection}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+            <View style={styles.headerRow}>
               <Pressable onPress={() => router.back()} style={styles.backBtn}>
                 <ArrowLeft size={24} color={Theme.colors.navy} />
-              </Pressable>
-              
-              <Pressable onPress={handleConfigureServer} style={styles.configBtn}>
-                <Server size={22} color={Theme.colors.navy} />
               </Pressable>
             </View>
 
@@ -107,27 +100,38 @@ export default function LoginScreen() {
               </Text>
             </View>
 
-            {/* User uploaded image used across screens */}
-            <Image 
-              source={require('../../../assets/images/girl1.png')} 
+            <Image
+              source={require('../../../assets/images/girl1.png')}
               style={styles.headerImage}
               resizeMode="contain"
             />
           </View>
 
           {/* Form Card */}
-          <Animated.View entering={FadeInUp.delay(200).duration(600)} style={styles.formCard}>
-            
+          <Animated.View
+            entering={FadeInUp.delay(100).duration(600)}
+            style={styles.formCard}
+          >
             {errorMsg ? (
-              <View style={styles.errorAlert}>
+              <Animated.View entering={FadeInDown} style={styles.errorAlert}>
                 <Text style={styles.errorAlertText}>{errorMsg}</Text>
-              </View>
+              </Animated.View>
             ) : null}
 
+            {/* Email Field */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email or Phone Number</Text>
-              <View style={styles.inputWrapper}>
-                <User size={18} color={Theme.colors['gray-400']} style={styles.inputIcon} />
+              <View
+                style={[
+                  styles.inputWrapper,
+                  focusedField === 'email' && styles.inputWrapperFocused,
+                ]}
+              >
+                <User
+                  size={18}
+                  color={focusedField === 'email' ? Theme.colors.teal : Theme.colors['gray-400']}
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your email or phone"
@@ -136,14 +140,26 @@ export default function LoginScreen() {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
                 />
               </View>
             </View>
 
+            {/* Password Field */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrapper}>
-                <Lock size={18} color={Theme.colors['gray-400']} style={styles.inputIcon} />
+              <View
+                style={[
+                  styles.inputWrapper,
+                  focusedField === 'password' && styles.inputWrapperFocused,
+                ]}
+              >
+                <Lock
+                  size={18}
+                  color={focusedField === 'password' ? Theme.colors.teal : Theme.colors['gray-400']}
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your password"
@@ -151,8 +167,13 @@ export default function LoginScreen() {
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
                 />
-                <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeBtn}
+                >
                   {showPassword ? (
                     <Eye size={18} color={Theme.colors['gray-400']} />
                   ) : (
@@ -162,99 +183,39 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <Pressable 
-              style={styles.forgotBtn} 
+            {/* Forgot Password */}
+            <Pressable
+              style={styles.forgotBtn}
               onPress={() => router.push('/(auth)/forgot-password')}
             >
               <Text style={styles.forgotText}>Forgot Password?</Text>
             </Pressable>
 
-            <Pressable 
-              style={[styles.loginBtn, loading && { opacity: 0.7 }]} 
+            {/* Login Button */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.loginBtn,
+                pressed && { opacity: 0.9, scale: 0.98 },
+                loading && { opacity: 0.7 },
+              ]}
               onPress={handleLogin}
               disabled={loading}
             >
-              <Text style={styles.loginBtnText}>{loading ? 'Logging in...' : 'Login'}</Text>
+              <Text style={styles.loginBtnText}>
+                {loading ? 'Logging in...' : 'Login'}
+              </Text>
             </Pressable>
 
+            {/* Signup Link */}
             <View style={styles.signupRow}>
               <Text style={styles.signupText}>Don't have an account? </Text>
               <Pressable onPress={() => router.push('/(auth)/signup')}>
                 <Text style={styles.signupLink}>Sign Up</Text>
               </Pressable>
             </View>
-            
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Server API Configuration Modal */}
-      <Modal
-        visible={showConfigModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowConfigModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Server size={22} color={Theme.colors.navy} style={{ marginRight: 8 }} />
-              <Text style={styles.modalTitle}>API Server URL</Text>
-            </View>
-            
-            <Text style={styles.modalDescription}>
-              Enter your backend server's URL. If testing on local Wi-Fi, enter your PC's IP (e.g., http://192.168.0.121:5000).
-            </Text>
-
-            <View style={styles.modalInputGroup}>
-              <Text style={styles.modalLabel}>Server Address</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={tempApiUrl}
-                onChangeText={setTempApiUrl}
-                placeholder="http://192.168.0.121:5000"
-                placeholderTextColor={Theme.colors['gray-400']}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-              />
-            </View>
-
-            <View style={styles.modalActionRow}>
-              <Pressable
-                style={[styles.modalBtn, styles.modalBtnSecondary]}
-                onPress={() => {
-                  setTempApiUrl(LOCAL_API_URL);
-                }}
-              >
-                <Text style={styles.modalBtnTextSecondary}>Reset to Default</Text>
-              </Pressable>
-            </View>
-
-            <View style={[styles.modalActionRow, { marginTop: 12 }]}>
-              <Pressable
-                style={[styles.modalBtn, styles.modalBtnCancel]}
-                onPress={() => setShowConfigModal(false)}
-              >
-                <Text style={styles.modalBtnTextCancel}>Cancel</Text>
-              </Pressable>
-              
-              <Pressable
-                style={[styles.modalBtn, styles.modalBtnSave]}
-                onPress={async () => {
-                  if (tempApiUrl.trim()) {
-                    await setApiBaseUrl(tempApiUrl.trim());
-                    showToast('API URL updated!', 'success');
-                    setShowConfigModal(false);
-                  }
-                }}
-              >
-                <Text style={styles.modalBtnTextSave}>Apply</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -262,48 +223,62 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F9F8',
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
     flexGrow: 1,
     minHeight: height,
   },
   topSection: {
-    height: height * 0.40,
-    paddingTop: 20,
+    height: height * 0.35,
+    paddingTop: 16,
     paddingHorizontal: 24,
     position: 'relative',
+    justifyContent: 'space-between',
+    paddingBottom: 24,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     zIndex: 10,
   },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Theme.colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
   titleContainer: {
-    marginTop: 20,
+    marginTop: 10,
     zIndex: 2,
     maxWidth: '65%',
   },
   welcomeText: {
     fontFamily: Theme.typography.h1.fontFamily,
-    fontSize: 28,
+    fontSize: 32,
+    fontWeight: 'bold',
     color: Theme.colors.navy,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
     fontFamily: Theme.typography.body.fontFamily,
     fontSize: 14,
     color: Theme.colors['gray-500'],
-    lineHeight: 22,
+    lineHeight: 20,
   },
   headerImage: {
     position: 'absolute',
-    right: -20,
-    bottom: -10,
-    width: width * 0.65,
-    height: height * 0.32,
+    right: -10,
+    bottom: -15,
+    width: width * 0.55,
+    height: height * 0.28,
     zIndex: 1,
   },
   formCard: {
@@ -311,27 +286,30 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.white,
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingHorizontal: 28,
+    paddingTop: 36,
     paddingBottom: 40,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.04,
+    shadowRadius: 20,
+    elevation: 8,
     zIndex: 10,
   },
   errorAlert: {
     backgroundColor: '#FEE2E2',
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 14,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
   },
   errorAlertText: {
     color: '#EF4444',
     fontFamily: Theme.typography.body.fontFamily,
     fontSize: 14,
     textAlign: 'center',
+    fontWeight: '500',
   },
   inputGroup: {
     marginBottom: 20,
@@ -342,16 +320,26 @@ const styles = StyleSheet.create({
     color: Theme.colors.navy,
     marginBottom: 8,
     marginLeft: 4,
+    fontWeight: '600',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Theme.colors['gray-200'],
-    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
     height: 56,
     paddingHorizontal: 16,
+    backgroundColor: '#F8FAFC',
+  },
+  inputWrapperFocused: {
+    borderColor: Theme.colors.teal,
     backgroundColor: Theme.colors.white,
+    shadowColor: Theme.colors.teal,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
   },
   inputIcon: {
     marginRight: 12,
@@ -368,30 +356,75 @@ const styles = StyleSheet.create({
   },
   forgotBtn: {
     alignSelf: 'flex-end',
-    marginBottom: 30,
+    marginBottom: 26,
   },
   forgotText: {
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 13,
     color: Theme.colors.teal,
+    fontWeight: '600',
   },
   loginBtn: {
     backgroundColor: Theme.colors.teal,
     height: 56,
-    borderRadius: 16,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 24,
     shadowColor: Theme.colors.teal,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
     elevation: 4,
   },
   loginBtnText: {
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 16,
+    fontWeight: 'bold',
     color: Theme.colors.white,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: 12,
+    color: '#94A3B8',
+    paddingHorizontal: 16,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 32,
+  },
+  socialBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: Theme.colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  socialIcon: {
+    width: 20,
+    height: 20,
+  },
+  socialBtnText: {
+    fontFamily: Theme.typography.h3.fontFamily,
+    fontSize: 14,
+    color: Theme.colors.navy,
+    fontWeight: '600',
   },
   signupRow: {
     flexDirection: 'row',
@@ -407,109 +440,6 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 14,
     color: Theme.colors.teal,
-  },
-  configBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    zIndex: 10,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: Theme.colors.white,
-    borderRadius: 24,
-    padding: 24,
-    width: '100%',
-    maxWidth: 340,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 5,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 18,
-    color: Theme.colors.navy,
-  },
-  modalDescription: {
-    fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 13,
-    color: Theme.colors['gray-500'],
-    lineHeight: 18,
-    marginBottom: 20,
-  },
-  modalInputGroup: {
-    marginBottom: 20,
-  },
-  modalLabel: {
-    fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 12,
-    color: Theme.colors.navy,
-    marginBottom: 6,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: Theme.colors['gray-200'],
-    borderRadius: 12,
-    height: 48,
-    paddingHorizontal: 14,
-    fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 14,
-    color: Theme.colors.navy,
-    backgroundColor: '#F9FAFB',
-  },
-  modalActionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  modalBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBtnSecondary: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    maxWidth: '100%',
-    flex: 0,
-    width: '100%',
-  },
-  modalBtnCancel: {
-    backgroundColor: '#F3F4F6',
-  },
-  modalBtnSave: {
-    backgroundColor: Theme.colors.teal,
-  },
-  modalBtnTextSecondary: {
-    fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 13,
-    color: '#4B5563',
-  },
-  modalBtnTextCancel: {
-    fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 14,
-    color: '#4B5563',
-  },
-  modalBtnTextSave: {
-    fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 14,
-    color: Theme.colors.white,
+    fontWeight: 'bold',
   },
 });
