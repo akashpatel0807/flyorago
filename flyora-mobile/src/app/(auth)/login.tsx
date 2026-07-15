@@ -161,86 +161,118 @@ export default function LoginScreen() {
           bounces={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header Section */}
-          <View style={styles.topSection}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.welcomeText}>
-                Welcome <Text style={{ color: Theme.colors.teal }}>Back</Text>
-              </Text>
-              <Text style={styles.subtitle}>
-                Login to continue shipping{'\n'}smarter with Flyorago.
-              </Text>
-            </View>
-
-            <Image
-              source={require('../../../assets/images/girl1.png')}
-              style={styles.headerImage}
-              resizeMode="contain"
-            />
-          </View>
-
-          {/* Form Card (Unified clean flat background) */}
-          <View style={styles.formCard}>
-            {errorMsg ? (
-              <Animated.View entering={FadeInDown} style={styles.errorAlert}>
-                <Text style={styles.errorAlertText}>{errorMsg}</Text>
+          <View style={styles.mainContainer}>
+            {/* Header Section */}
+            <View style={styles.topSection}>
+              <Animated.View
+                entering={FadeInDown.delay(100).duration(600).springify()}
+                style={styles.titleContainer}
+              >
+                <Text style={styles.welcomeText}>
+                  Welcome <Text style={{ color: Theme.colors.teal }}>Back</Text>
+                </Text>
+                <Text style={styles.subtitle}>
+                  Login to continue shipping{'\n'}smarter with Flyorago.
+                </Text>
               </Animated.View>
-            ) : null}
 
-            {/* Email Field */}
-            <StyledInput
-              key="login-email"
-              label="Email or Phone Number"
-              icon={User}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email or phone"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+              <Animated.Image
+                entering={FadeInDown.delay(150).duration(700).springify()}
+                source={require('../../../assets/images/girl1.png')}
+                style={styles.headerImage}
+                resizeMode="contain"
+              />
+            </View>
 
-            {/* Password Field */}
-            <StyledInput
-              key="login-password"
-              label="Password"
-              icon={Lock}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your password"
-              secureTextEntry
-            />
+            {/* Form Section */}
+            <View style={styles.formCard}>
+              {errorMsg ? (
+                <Animated.View entering={FadeInDown} style={styles.errorAlert}>
+                  <Text style={styles.errorAlertText}>{errorMsg}</Text>
+                </Animated.View>
+              ) : null}
 
-            {/* Forgot Password */}
-            <Pressable
-              style={styles.forgotBtn}
-              onPress={() => router.push('/(auth)/forgot-password')}
-            >
-              <Text style={styles.forgotText}>Forgot Password?</Text>
-            </Pressable>
+              {/* Email Field */}
+              <Animated.View entering={FadeInDown.delay(200).duration(600).springify()}>
+                <StyledInput
+                  key="login-email"
+                  label="Email or Phone Number"
+                  icon={User}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email or phone"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </Animated.View>
 
-            {/* Login Button */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.loginBtn,
-                pressed && { opacity: 0.9, scale: 0.98 },
-                loading && { opacity: 0.7 },
-              ]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              <Text style={styles.loginBtnText}>
-                {loading ? 'Logging in...' : 'Login'}
-              </Text>
-            </Pressable>
+              {/* Password Field */}
+              <Animated.View entering={FadeInDown.delay(300).duration(600).springify()}>
+                <StyledInput
+                  key="login-password"
+                  label="Password"
+                  icon={Lock}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter your password"
+                  secureTextEntry
+                />
+              </Animated.View>
 
-            {/* Signup Link */}
-            <View style={styles.signupRow}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
-              <Pressable onPress={() => router.push('/(auth)/signup')}>
-                <Text style={styles.signupLink}>Sign Up</Text>
-              </Pressable>
+              {/* Forgot Password */}
+              <Animated.View entering={FadeInDown.delay(350).duration(600).springify()}>
+                <Pressable
+                  style={styles.forgotBtn}
+                  onPress={() => router.push('/(auth)/forgot-password')}
+                >
+                  <Text style={styles.forgotText}>Forgot Password?</Text>
+                </Pressable>
+              </Animated.View>
+
+              {/* Login Button */}
+              <Animated.View entering={FadeInDown.delay(400).duration(600).springify()}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.loginBtn,
+                    pressed && { opacity: 0.9, scale: 0.98 },
+                    loading && { opacity: 0.7 },
+                  ]}
+                  onPress={handleLogin}
+                  disabled={loading}
+                >
+                  <Text style={styles.loginBtnText}>
+                    {loading ? 'Logging in...' : 'Login'}
+                  </Text>
+                </Pressable>
+              </Animated.View>
+
+              {/* Signup Link */}
+              <Animated.View entering={FadeInDown.delay(450).duration(600).springify()}>
+                <View style={styles.signupRow}>
+                  <Text style={styles.signupText}>Don't have an account? </Text>
+                  <Pressable onPress={() => router.push('/(auth)/signup')}>
+                    <Text style={styles.signupLink}>Sign Up</Text>
+                  </Pressable>
+                </View>
+              </Animated.View>
             </View>
           </View>
+
+          {/* Bottom Brand Watermark */}
+          <Animated.View
+            entering={FadeInDown.delay(500).duration(800).springify()}
+            style={styles.brandContainer}
+          >
+            <Text style={styles.brandFromText}>from</Text>
+            <View style={styles.brandLogoRow}>
+              <Image
+                source={require('../../../assets/images/flyorago-splash.png')}
+                style={styles.brandLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.brandNameText}>FLYORAGO</Text>
+            </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingWrapper>
     </SafeAreaView>
@@ -254,6 +286,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+  },
+  mainContainer: {
+    flex: 1,
   },
   topSection: {
     height: height * 0.28,
@@ -295,7 +332,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 28,
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   errorAlert: {
     backgroundColor: '#FEE2E2',
@@ -394,5 +431,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.teal,
     fontWeight: 'bold',
+  },
+  brandContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 24,
+    marginTop: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  brandFromText: {
+    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: 11,
+    color: '#94A3B8',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+    textTransform: 'lowercase',
+  },
+  brandLogoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  brandLogo: {
+    width: 20,
+    height: 20,
+  },
+  brandNameText: {
+    fontFamily: Theme.typography.h2.fontFamily,
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Theme.colors.teal,
+    letterSpacing: 1.5,
   },
 });

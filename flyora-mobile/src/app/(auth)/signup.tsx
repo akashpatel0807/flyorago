@@ -168,133 +168,170 @@ export default function SignupScreen() {
           bounces={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header Section */}
-          <View style={styles.topSection}>
-            <View style={styles.headerRow}>
-              {/* Back button redirects directly to Login page */}
-              <Pressable onPress={() => router.replace('/(auth)/login')} style={styles.backBtn}>
-                <ArrowLeft size={24} color={Theme.colors.navy} />
-              </Pressable>
-            </View>
+          <View style={styles.mainContainer}>
+            {/* Header Section */}
+            <View style={styles.topSection}>
+              <View style={styles.headerRow}>
+                <Pressable onPress={() => router.replace('/(auth)/login')} style={styles.backBtn}>
+                  <ArrowLeft size={24} color={Theme.colors.navy} />
+                </Pressable>
+              </View>
 
-            <View style={styles.titleContainer}>
-              <Text style={styles.welcomeText}>
-                Create <Text style={{ color: Theme.colors.teal }}>Account</Text>
-              </Text>
-              <Text style={styles.subtitle}>
-                Join Flyorago and start your{'\n'}smart shipping journey.
-              </Text>
-            </View>
-
-            <Image
-              source={require('../../../assets/images/girl1.png')}
-              style={styles.headerImage}
-              resizeMode="contain"
-            />
-          </View>
-
-          {/* Form Card (Unified clean flat background) */}
-          <View style={styles.formCard}>
-            {errorMsg ? (
-              <Animated.View entering={FadeInDown} style={styles.errorAlert}>
-                <Text style={styles.errorAlertText}>{errorMsg}</Text>
+              <Animated.View
+                entering={FadeInDown.delay(100).duration(600).springify()}
+                style={styles.titleContainer}
+              >
+                <Text style={styles.welcomeText}>
+                  Create <Text style={{ color: Theme.colors.teal }}>Account</Text>
+                </Text>
+                <Text style={styles.subtitle}>
+                  Join Flyorago and start your{'\n'}smart shipping journey.
+                </Text>
               </Animated.View>
-            ) : null}
 
-            {/* Full Name Field */}
-            <StyledInput
-              key="signup-fullname"
-              label="Full Name"
-              icon={User}
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="Enter your full name"
-            />
+              <Animated.Image
+                entering={FadeInDown.delay(150).duration(700).springify()}
+                source={require('../../../assets/images/girl1.png')}
+                style={styles.headerImage}
+                resizeMode="contain"
+              />
+            </View>
 
-            {/* Email Field */}
-            <StyledInput
-              key="signup-email"
-              label="Email Address"
-              icon={Mail}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+            {/* Form Section */}
+            <View style={styles.formCard}>
+              {errorMsg ? (
+                <Animated.View entering={FadeInDown} style={styles.errorAlert}>
+                  <Text style={styles.errorAlertText}>{errorMsg}</Text>
+                </Animated.View>
+              ) : null}
 
-            {/* Phone Number Field */}
-            <StyledInput
-              key="signup-phone"
-              label="Phone Number"
-              icon={Phone}
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="Enter your phone number"
-              keyboardType="phone-pad"
-            />
+              {/* Full Name Field */}
+              <Animated.View entering={FadeInDown.delay(200).duration(600).springify()}>
+                <StyledInput
+                  key="signup-fullname"
+                  label="Full Name"
+                  icon={User}
+                  value={fullName}
+                  onChangeText={setFullName}
+                  placeholder="Enter your full name"
+                />
+              </Animated.View>
 
-            {/* Password Field */}
-            <StyledInput
-              key="signup-password"
-              label="Password"
-              icon={Lock}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Create a password"
-              secureTextEntry
-            />
+              {/* Email Field */}
+              <Animated.View entering={FadeInDown.delay(250).duration(600).springify()}>
+                <StyledInput
+                  key="signup-email"
+                  label="Email Address"
+                  icon={Mail}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </Animated.View>
 
-            {/* Confirm Password Field */}
-            <StyledInput
-              key="signup-confirmpassword"
-              label="Confirm Password"
-              icon={Lock}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirm your password"
-              secureTextEntry
-            />
+              {/* Phone Number Field */}
+              <Animated.View entering={FadeInDown.delay(300).duration(600).springify()}>
+                <StyledInput
+                  key="signup-phone"
+                  label="Phone Number"
+                  icon={Phone}
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="Enter your phone number"
+                  keyboardType="phone-pad"
+                />
+              </Animated.View>
 
-            {/* Terms and Conditions Checkbox */}
-            <Pressable
-              style={styles.termsRow}
-              onPress={() => setAgreeTerms(!agreeTerms)}
-            >
-              {agreeTerms ? (
-                <CheckSquare size={20} color={Theme.colors.teal} />
-              ) : (
-                <Square size={20} color={Theme.colors['gray-400']} />
-              )}
-              <Text style={styles.termsText}>
-                I agree to the <Text style={styles.termsLink}>Terms & Conditions</Text> and{' '}
-                <Text style={styles.termsLink}>Privacy Policy</Text>
-              </Text>
-            </Pressable>
+              {/* Password Field */}
+              <Animated.View entering={FadeInDown.delay(350).duration(600).springify()}>
+                <StyledInput
+                  key="signup-password"
+                  label="Password"
+                  icon={Lock}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Create a password"
+                  secureTextEntry
+                />
+              </Animated.View>
 
-            {/* Signup Button */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.signupBtn,
-                pressed && { opacity: 0.9, scale: 0.98 },
-                loading && { opacity: 0.7 },
-              ]}
-              onPress={handleSignup}
-              disabled={loading}
-            >
-              <Text style={styles.signupBtnText}>
-                {loading ? 'Creating Account...' : 'Sign Up'}
-              </Text>
-            </Pressable>
+              {/* Confirm Password Field */}
+              <Animated.View entering={FadeInDown.delay(400).duration(600).springify()}>
+                <StyledInput
+                  key="signup-confirmpassword"
+                  label="Confirm Password"
+                  icon={Lock}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm your password"
+                  secureTextEntry
+                />
+              </Animated.View>
 
-            {/* Login Link */}
-            <View style={styles.loginRow}>
-              <Text style={styles.loginText}>Already have an account? </Text>
-              <Pressable onPress={() => router.replace('/(auth)/login')}>
-                <Text style={styles.loginLink}>Login</Text>
-              </Pressable>
+              {/* Terms and Conditions Checkbox */}
+              <Animated.View entering={FadeInDown.delay(450).duration(600).springify()}>
+                <Pressable
+                  style={styles.termsRow}
+                  onPress={() => setAgreeTerms(!agreeTerms)}
+                >
+                  {agreeTerms ? (
+                    <CheckSquare size={20} color={Theme.colors.teal} />
+                  ) : (
+                    <Square size={20} color={Theme.colors['gray-400']} />
+                  )}
+                  <Text style={styles.termsText}>
+                    I agree to the <Text style={styles.termsLink}>Terms & Conditions</Text> and{' '}
+                    <Text style={styles.termsLink}>Privacy Policy</Text>
+                  </Text>
+                </Pressable>
+              </Animated.View>
+
+              {/* Signup Button */}
+              <Animated.View entering={FadeInDown.delay(500).duration(600).springify()}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.signupBtn,
+                    pressed && { opacity: 0.9, scale: 0.98 },
+                    loading && { opacity: 0.7 },
+                  ]}
+                  onPress={handleSignup}
+                  disabled={loading}
+                >
+                  <Text style={styles.signupBtnText}>
+                    {loading ? 'Creating Account...' : 'Sign Up'}
+                  </Text>
+                </Pressable>
+              </Animated.View>
+
+              {/* Login Link */}
+              <Animated.View entering={FadeInDown.delay(550).duration(600).springify()}>
+                <View style={styles.loginRow}>
+                  <Text style={styles.loginText}>Already have an account? </Text>
+                  <Pressable onPress={() => router.replace('/(auth)/login')}>
+                    <Text style={styles.loginLink}>Login</Text>
+                  </Pressable>
+                </View>
+              </Animated.View>
             </View>
           </View>
+
+          {/* Bottom Brand Watermark */}
+          <Animated.View
+            entering={FadeInDown.delay(600).duration(800).springify()}
+            style={styles.brandContainer}
+          >
+            <Text style={styles.brandFromText}>from</Text>
+            <View style={styles.brandLogoRow}>
+              <Image
+                source={require('../../../assets/images/flyorago-splash.png')}
+                style={styles.brandLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.brandNameText}>FLYORAGO</Text>
+            </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingWrapper>
     </SafeAreaView>
@@ -308,7 +345,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+  },
+  mainContainer: {
+    flex: 1,
   },
   topSection: {
     height: height * 0.30,
@@ -367,7 +408,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 28,
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   errorAlert: {
     backgroundColor: '#FEE2E2',
@@ -474,5 +515,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.teal,
     fontWeight: 'bold',
+  },
+  brandContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 24,
+    marginTop: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  brandFromText: {
+    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: 11,
+    color: '#94A3B8',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+    textTransform: 'lowercase',
+  },
+  brandLogoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  brandLogo: {
+    width: 20,
+    height: 20,
+  },
+  brandNameText: {
+    fontFamily: Theme.typography.h2.fontFamily,
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Theme.colors.teal,
+    letterSpacing: 1.5,
   },
 });
