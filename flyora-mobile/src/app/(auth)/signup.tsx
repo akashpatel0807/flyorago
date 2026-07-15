@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,22 +13,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuthStore, useToastStore } from '../../store';
+import { useToastStore } from '../../store';
 import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
-import { ArrowLeft, Eye, EyeOff, CheckSquare, Square } from 'lucide-react-native';
-import Animated, {
-  FadeInDown,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import { ArrowLeft, Lock, Eye, EyeOff, Mail, Phone, User, ChevronDown, ArrowRight } from 'lucide-react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
-interface FloatingLabelInputProps {
-  label: string;
+interface StyledInputProps {
+  placeholder: string;
+  icon: React.ComponentType<any>;
   value: string;
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
@@ -36,62 +31,37 @@ interface FloatingLabelInputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
-// Google/Microsoft-style sleek Floating Label Input with professional border radius
-const FloatingLabelInput = ({
-  label,
+// Mockup-matching flat TextInput with stable local focus styling
+const StyledInput = ({
+  placeholder,
+  icon: Icon,
   value,
   onChangeText,
   secureTextEntry,
   keyboardType = 'default',
   autoCapitalize = 'none',
-}: FloatingLabelInputProps) => {
+}: StyledInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = secureTextEntry !== undefined;
 
-  const animatedValue = useSharedValue(value ? 1 : 0);
-
-  useEffect(() => {
-    animatedValue.value = withTiming((isFocused || value) ? 1 : 0, { duration: 150 });
-  }, [isFocused, value]);
-
-  const labelStyle = useAnimatedStyle(() => {
-    const translateY = interpolate(animatedValue.value, [0, 1], [18, -8]);
-    const scale = interpolate(animatedValue.value, [0, 1], [1, 0.82]);
-    const left = interpolate(animatedValue.value, [0, 1], [16, 12]);
-
-    return {
-      transform: [
-        { translateY },
-        { scale },
-      ],
-      left,
-    };
-  });
-
   return (
-    <View style={styles.floatingInputGroup}>
-      <Animated.Text
-        style={[
-          styles.floatingLabel,
-          labelStyle,
-          {
-            color: isFocused ? Theme.colors.teal : '#64748B',
-            backgroundColor: isFocused || value ? '#FFFFFF' : 'transparent',
-            paddingHorizontal: isFocused || value ? 4 : 0,
-          },
-        ]}
-      >
-        {label}
-      </Animated.Text>
+    <View style={styles.inputGroup}>
       <View
         style={[
           styles.inputWrapper,
           isFocused && styles.inputWrapperFocused,
         ]}
       >
+        <Icon
+          size={18}
+          color={isFocused ? Theme.colors.teal : '#94A3B8'}
+          style={styles.inputIcon}
+        />
         <TextInput
           style={styles.input}
+          placeholder={placeholder}
+          placeholderTextColor="#94A3B8"
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={isPassword ? !showPassword : false}
@@ -106,9 +76,9 @@ const FloatingLabelInput = ({
             style={styles.eyeBtn}
           >
             {showPassword ? (
-              <Eye size={18} color="#64748B" />
+              <Eye size={18} color="#94A3B8" />
             ) : (
-              <EyeOff size={18} color="#64748B" />
+              <EyeOff size={18} color="#94A3B8" />
             )}
           </Pressable>
         )}
@@ -143,6 +113,8 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [isPhoneFocused, setIsPhoneFocused] = useState(false);
+
   const handleSignup = async () => {
     if (!fullName || !email || !phone || !password || !confirmPassword) {
       setErrorMsg('Please fill in all fields.');
@@ -155,7 +127,7 @@ export default function SignupScreen() {
     }
 
     if (!agreeTerms) {
-      setErrorMsg('You must agree to the Terms & Conditions.');
+      setErrorMsg('You must agree to the Terms of Service & Privacy Policy.');
       return;
     }
 
@@ -195,35 +167,38 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.mainContainer}>
-            {/* Header Section with original Back Button and illustration layout */}
+            {/* Top Illustration Section */}
             <View style={styles.topSection}>
-              <View style={styles.headerRow}>
-                <Pressable onPress={() => router.replace('/(auth)/login')} style={styles.backBtn}>
-                  <ArrowLeft size={24} color={Theme.colors.navy} />
+              {/* Brand Header with Back Button */}
+              <View style={styles.brandHeader}>
+                <Pressable onPress={() => router.replace('/(auth)/login')} style={styles.backArrowCircle}>
+                  <ArrowLeft size={18} color={Theme.colors.navy} />
                 </Pressable>
+                <Image
+                  source={require('../../../assets/images/flyorago-icon.png')}
+                  style={styles.brandIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.brandName}>Flyorago</Text>
               </View>
 
-              <Animated.View
-                entering={FadeInDown.delay(100).duration(600).springify()}
-                style={styles.titleContainer}
-              >
-                <Text style={styles.welcomeText}>
-                  Create <Text style={{ color: Theme.colors.teal }}>Account</Text>
-                </Text>
+              {/* Centered Welcome text layout */}
+              <View style={styles.titleContainer}>
+                <Text style={styles.welcomeText}>Create</Text>
+                <Text style={[styles.welcomeText, { color: Theme.colors.teal }]}>Account</Text>
                 <Text style={styles.subtitle}>
-                  Join Flyorago and start your{'\n'}smart shipping journey.
+                  Join Flyorago and start shipping{'\n'}smarter today.
                 </Text>
-              </Animated.View>
+              </View>
 
-              <Animated.Image
-                entering={FadeInDown.delay(150).duration(700).springify()}
-                source={require('../../../assets/images/girl1.png')}
+              <Image
+                source={require('../../../assets/images/onbording second screen.png')}
                 style={styles.headerImage}
                 resizeMode="contain"
               />
             </View>
 
-            {/* Google/Microsoft-style sleek Form Container */}
+            {/* Form Section */}
             <View style={styles.formCard}>
               {errorMsg ? (
                 <Animated.View entering={FadeInDown} style={styles.errorAlert}>
@@ -232,104 +207,124 @@ export default function SignupScreen() {
               ) : null}
 
               {/* Full Name Field */}
-              <Animated.View entering={FadeInDown.delay(200).duration(600).springify()}>
-                <FloatingLabelInput
-                  key="signup-fullname"
-                  label="Full Name"
-                  value={fullName}
-                  onChangeText={setFullName}
-                />
-              </Animated.View>
+              <StyledInput
+                placeholder="Full Name"
+                icon={User}
+                value={fullName}
+                onChangeText={setFullName}
+              />
 
-              {/* Email Field */}
-              <Animated.View entering={FadeInDown.delay(250).duration(600).springify()}>
-                <FloatingLabelInput
-                  key="signup-email"
-                  label="Email Address"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </Animated.View>
+              {/* Email Address Field */}
+              <StyledInput
+                placeholder="Email Address"
+                icon={Mail}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
 
-              {/* Phone Number Field */}
-              <Animated.View entering={FadeInDown.delay(300).duration(600).springify()}>
-                <FloatingLabelInput
-                  key="signup-phone"
-                  label="Phone Number"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                />
-              </Animated.View>
+              {/* Custom Phone Number Field (mockup flag dropdown & code) */}
+              <View style={styles.inputGroup}>
+                <View
+                  style={[
+                    styles.phoneInputWrapper,
+                    isPhoneFocused && styles.inputWrapperFocused,
+                  ]}
+                >
+                  <Phone size={18} color={isPhoneFocused ? Theme.colors.teal : '#94A3B8'} style={styles.inputIcon} />
+                  
+                  {/* Flag Selector */}
+                  <View style={styles.flagDropdown}>
+                    <Text style={styles.flagText}>🇮🇳</Text>
+                    <ChevronDown size={10} color="#94A3B8" />
+                  </View>
+
+                  {/* Country Code */}
+                  <View style={styles.countryCodeDropdown}>
+                    <Text style={styles.countryCodeText}>+91</Text>
+                    <ChevronDown size={10} color="#94A3B8" />
+                  </View>
+
+                  {/* Vertical Divider */}
+                  <View style={styles.verticalDivider} />
+
+                  <TextInput
+                    style={styles.phoneInput}
+                    placeholder="Phone Number"
+                    placeholderTextColor="#94A3B8"
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                    onFocus={() => setIsPhoneFocused(true)}
+                    onBlur={() => setIsPhoneFocused(false)}
+                  />
+                </View>
+              </View>
 
               {/* Password Field */}
-              <Animated.View entering={FadeInDown.delay(350).duration(600).springify()}>
-                <FloatingLabelInput
-                  key="signup-password"
-                  label="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                />
-              </Animated.View>
+              <StyledInput
+                placeholder="Password"
+                icon={Lock}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
 
               {/* Confirm Password Field */}
-              <Animated.View entering={FadeInDown.delay(400).duration(600).springify()}>
-                <FloatingLabelInput
-                  key="signup-confirmpassword"
-                  label="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry
-                />
-              </Animated.View>
+              <StyledInput
+                placeholder="Confirm Password"
+                icon={Lock}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
 
-              {/* Terms and Conditions Checkbox */}
-              <Animated.View entering={FadeInDown.delay(450).duration(600).springify()}>
-                <Pressable
-                  style={styles.termsRow}
-                  onPress={() => setAgreeTerms(!agreeTerms)}
-                >
-                  {agreeTerms ? (
-                    <CheckSquare size={20} color={Theme.colors.teal} />
-                  ) : (
-                    <Square size={20} color={Theme.colors['gray-400']} />
-                  )}
-                  <Text style={styles.termsText}>
-                    I agree to the <Text style={styles.termsLink}>Terms & Conditions</Text> and{' '}
-                    <Text style={styles.termsLink}>Privacy Policy</Text>
-                  </Text>
-                </Pressable>
-              </Animated.View>
-
-              {/* Signup Button */}
-              <Animated.View entering={FadeInDown.delay(500).duration(600).springify()}>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.signupBtn,
-                    pressed && { opacity: 0.9, scale: 0.98 },
-                    loading && { opacity: 0.7 },
+              {/* Circular Radio Checkbox for Terms */}
+              <Pressable
+                style={styles.termsRow}
+                onPress={() => setAgreeTerms(!agreeTerms)}
+              >
+                <View
+                  style={[
+                    styles.circleCheckbox,
+                    agreeTerms && styles.circleCheckboxChecked,
                   ]}
-                  onPress={handleSignup}
-                  disabled={loading}
                 >
-                  <Text style={styles.signupBtnText}>
-                    {loading ? 'Creating Account...' : 'Sign Up'}
-                  </Text>
-                </Pressable>
-              </Animated.View>
+                  {agreeTerms && <View style={styles.circleCheckboxInner} />}
+                </View>
+                <Text style={styles.termsText}>
+                  I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
+                  <Text style={styles.termsLink}>Privacy Policy</Text>
+                </Text>
+              </Pressable>
+
+              {/* Create Account Button with Chevron circle */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.signupBtn,
+                  pressed && { opacity: 0.9, scale: 0.98 },
+                  loading && { opacity: 0.7 },
+                ]}
+                onPress={handleSignup}
+                disabled={loading}
+              >
+                <View style={{ width: 24 }} />
+                <Text style={styles.signupBtnText}>
+                  {loading ? 'Creating Account...' : 'Create Account'}
+                </Text>
+                <View style={styles.buttonArrowCircle}>
+                  <ArrowRight size={14} color={Theme.colors.teal} />
+                </View>
+              </Pressable>
 
               {/* Login Link */}
-              <Animated.View entering={FadeInDown.delay(550).duration(600).springify()}>
-                <View style={styles.loginRow}>
-                  <Text style={styles.loginText}>Already have an account? </Text>
-                  <Pressable onPress={() => router.replace('/(auth)/login')}>
-                    <Text style={styles.loginLink}>Login</Text>
-                  </Pressable>
-                </View>
-              </Animated.View>
+              <View style={styles.loginRow}>
+                <Text style={styles.loginText}>Already have an account? </Text>
+                <Pressable onPress={() => router.replace('/(auth)/login')}>
+                  <Text style={styles.loginLink}>Login</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -351,69 +346,88 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topSection: {
-    height: height * 0.30,
+    height: height * 0.32,
     paddingTop: 16,
     paddingHorizontal: 24,
     position: 'relative',
-    justifyContent: 'space-between',
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    justifyContent: 'flex-end',
+    paddingBottom: 36,
+    backgroundColor: '#F0FDF8', // Soft green background
   },
-  headerRow: {
+  brandHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'absolute',
+    top: 16,
+    left: 24,
     zIndex: 10,
   },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Theme.colors.white,
+  backArrowCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    marginRight: 10,
+  },
+  brandIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
+  brandName: {
+    fontFamily: Theme.typography.h2.fontFamily,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Theme.colors.navy,
   },
   titleContainer: {
-    marginTop: 10,
     zIndex: 2,
-    maxWidth: '65%',
+    maxWidth: '55%',
   },
   welcomeText: {
     fontFamily: Theme.typography.h1.fontFamily,
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: 'bold',
     color: Theme.colors.navy,
-    marginBottom: 6,
+    lineHeight: 40,
   },
   subtitle: {
     fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 14,
+    fontSize: 13,
     color: Theme.colors['gray-500'],
-    lineHeight: 20,
+    lineHeight: 18,
+    marginTop: 10,
   },
   headerImage: {
     position: 'absolute',
-    right: -10,
+    right: 0,
     bottom: -15,
-    width: width * 0.52,
-    height: height * 0.25,
+    width: width * 0.50,
+    height: height * 0.28,
     zIndex: 1,
   },
   formCard: {
-    flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 28,
-    paddingTop: 16,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
+    paddingHorizontal: 24,
+    paddingTop: 36,
     paddingBottom: 40,
+    marginTop: -24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -12 },
+    shadowOpacity: 0.03,
+    shadowRadius: 16,
+    elevation: 8,
   },
   errorAlert: {
     backgroundColor: '#FEE2E2',
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#FCA5A5',
@@ -425,30 +439,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
-  floatingInputGroup: {
-    position: 'relative',
-    marginBottom: 20,
-    width: '100%',
-  },
-  floatingLabel: {
-    position: 'absolute',
-    fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 14,
-    zIndex: 10,
+  inputGroup: {
+    marginBottom: 16,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1', // Clean grey border like Google
-    borderRadius: 12, // Professional sleek radius
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
     height: 56,
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   inputWrapperFocused: {
-    borderColor: Theme.colors.teal, // Accent border on focus
-    borderWidth: 2,
+    borderColor: Theme.colors.teal,
+    backgroundColor: '#FFFFFF',
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
     flex: 1,
@@ -456,7 +465,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.navy,
     height: '100%',
-    paddingTop: Platform.OS === 'ios' ? 0 : 4,
+  },
+  phoneInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 56,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8FAFC',
+  },
+  flagDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginRight: 10,
+  },
+  flagText: {
+    fontSize: 18,
+  },
+  countryCodeDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginRight: 10,
+  },
+  countryCodeText: {
+    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: 14,
+    color: Theme.colors.navy,
+    fontWeight: '500',
+  },
+  verticalDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#E2E8F0',
+    marginRight: 12,
+  },
+  phoneInput: {
+    flex: 1,
+    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: 14,
+    color: Theme.colors.navy,
+    height: '100%',
   },
   eyeBtn: {
     padding: 8,
@@ -464,9 +516,28 @@ const styles = StyleSheet.create({
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 26,
+    marginBottom: 24,
     paddingHorizontal: 4,
     gap: 12,
+  },
+  circleCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  circleCheckboxChecked: {
+    borderColor: Theme.colors.teal,
+  },
+  circleCheckboxInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Theme.colors.teal,
   },
   termsText: {
     flex: 1,
@@ -477,26 +548,36 @@ const styles = StyleSheet.create({
   },
   termsLink: {
     color: Theme.colors.teal,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   signupBtn: {
     backgroundColor: Theme.colors.teal,
     height: 56,
-    borderRadius: 12, // Sleek button border radius
-    justifyContent: 'center',
+    borderRadius: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 16,
     marginBottom: 24,
     shadowColor: Theme.colors.teal,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
   },
   signupBtnText: {
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 16,
     fontWeight: 'bold',
     color: Theme.colors.white,
+  },
+  buttonArrowCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginRow: {
     flexDirection: 'row',
