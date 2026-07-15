@@ -343,7 +343,7 @@ export default function SignupScreen() {
 
               {/* Animated Floating Airplane */}
               <Animated.View style={[styles.floatingPlane, animatedPlaneStyle]}>
-                <Ionicons name="plane" size={14} color={EMERALD_GREEN} />
+                <Ionicons name="airplane" size={14} color={EMERALD_GREEN} />
               </Animated.View>
 
               {/* Animated Floating Location Pin */}
@@ -545,7 +545,7 @@ export default function SignupScreen() {
 
                   {/* Apple Button */}
                   <Pressable style={styles.socialBtn}>
-                    <AntDesign name="apple1" size={24} color="#000000" />
+                    <Ionicons name="logo-apple" size={24} color="#000000" />
                   </Pressable>
 
                   {/* Facebook Button */}
