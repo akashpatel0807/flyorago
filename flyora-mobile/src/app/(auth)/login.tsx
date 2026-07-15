@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   Image,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -32,6 +33,23 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -84,27 +102,31 @@ export default function LoginScreen() {
           bounces={false}
         >
           {/* Header Section */}
-          <View style={styles.topSection}>
+          <View style={[styles.topSection, isKeyboardVisible && { height: 70, justifyContent: 'center', paddingBottom: 0 }]}>
             <View style={styles.headerRow}>
               <Pressable onPress={() => router.back()} style={styles.backBtn}>
                 <ArrowLeft size={24} color={Theme.colors.navy} />
               </Pressable>
             </View>
 
-            <View style={styles.titleContainer}>
-              <Text style={styles.welcomeText}>
-                Welcome <Text style={{ color: Theme.colors.teal }}>Back</Text>
-              </Text>
-              <Text style={styles.subtitle}>
-                Login to continue shipping{'\n'}smarter with Flyorago.
-              </Text>
-            </View>
+            {!isKeyboardVisible && (
+              <View style={styles.titleContainer}>
+                <Text style={styles.welcomeText}>
+                  Welcome <Text style={{ color: Theme.colors.teal }}>Back</Text>
+                </Text>
+                <Text style={styles.subtitle}>
+                  Login to continue shipping{'\n'}smarter with Flyorago.
+                </Text>
+              </View>
+            )}
 
-            <Image
-              source={require('../../../assets/images/girl1.png')}
-              style={styles.headerImage}
-              resizeMode="contain"
-            />
+            {!isKeyboardVisible && (
+              <Image
+                source={require('../../../assets/images/girl1.png')}
+                style={styles.headerImage}
+                resizeMode="contain"
+              />
+            )}
           </View>
 
           {/* Form Card */}
