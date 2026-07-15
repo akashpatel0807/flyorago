@@ -171,7 +171,8 @@ export default function SignupScreen() {
           {/* Header Section */}
           <View style={styles.topSection}>
             <View style={styles.headerRow}>
-              <Pressable onPress={() => router.back()} style={styles.backBtn}>
+              {/* Back button redirects directly to Login page */}
+              <Pressable onPress={() => router.replace('/(auth)/login')} style={styles.backBtn}>
                 <ArrowLeft size={24} color={Theme.colors.navy} />
               </Pressable>
             </View>
@@ -192,7 +193,7 @@ export default function SignupScreen() {
             />
           </View>
 
-          {/* Form Card */}
+          {/* Form Card (Unified clean flat background) */}
           <View style={styles.formCard}>
             {errorMsg ? (
               <Animated.View entering={FadeInDown} style={styles.errorAlert}>
@@ -289,7 +290,7 @@ export default function SignupScreen() {
             {/* Login Link */}
             <View style={styles.loginRow}>
               <Text style={styles.loginText}>Already have an account? </Text>
-              <Pressable onPress={() => router.push('/(auth)/login')}>
+              <Pressable onPress={() => router.replace('/(auth)/login')}>
                 <Text style={styles.loginLink}>Login</Text>
               </Pressable>
             </View>
@@ -303,7 +304,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     flexGrow: 1,
@@ -316,6 +317,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'space-between',
     paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
   },
   headerRow: {
     flexDirection: 'row',
@@ -362,18 +364,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   formCard: {
-    backgroundColor: Theme.colors.white,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 28,
-    paddingTop: 36,
+    paddingTop: 16,
     paddingBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.04,
-    shadowRadius: 20,
-    elevation: 8,
-    zIndex: 10,
   },
   errorAlert: {
     backgroundColor: '#FEE2E2',

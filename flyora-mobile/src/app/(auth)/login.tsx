@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore, useToastStore } from '../../store';
 import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
-import { ArrowLeft, User, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { User, Lock, Eye, EyeOff } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
@@ -163,12 +163,6 @@ export default function LoginScreen() {
         >
           {/* Header Section */}
           <View style={styles.topSection}>
-            <View style={styles.headerRow}>
-              <Pressable onPress={() => router.back()} style={styles.backBtn}>
-                <ArrowLeft size={24} color={Theme.colors.navy} />
-              </Pressable>
-            </View>
-
             <View style={styles.titleContainer}>
               <Text style={styles.welcomeText}>
                 Welcome <Text style={{ color: Theme.colors.teal }}>Back</Text>
@@ -185,7 +179,7 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Form Card */}
+          {/* Form Card (Unified clean flat background) */}
           <View style={styles.formCard}>
             {errorMsg ? (
               <Animated.View entering={FadeInDown} style={styles.errorAlert}>
@@ -256,41 +250,24 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     flexGrow: 1,
   },
   topSection: {
-    height: height * 0.35,
-    paddingTop: 16,
-    paddingHorizontal: 24,
+    height: height * 0.28,
+    paddingTop: 24,
+    paddingHorizontal: 28,
     position: 'relative',
-    justifyContent: 'space-between',
-    paddingBottom: 24,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Theme.colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    justifyContent: 'flex-end',
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
   },
   titleContainer: {
-    marginTop: 10,
     zIndex: 2,
     maxWidth: '65%',
+    marginBottom: 8,
   },
   welcomeText: {
     fontFamily: Theme.typography.h1.fontFamily,
@@ -308,24 +285,17 @@ const styles = StyleSheet.create({
   headerImage: {
     position: 'absolute',
     right: -10,
-    bottom: -15,
+    bottom: -10,
     width: width * 0.55,
-    height: height * 0.28,
+    height: height * 0.25,
     zIndex: 1,
   },
   formCard: {
-    backgroundColor: Theme.colors.white,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    flex: 1,
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 28,
-    paddingTop: 36,
+    paddingTop: 16,
     paddingBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.04,
-    shadowRadius: 20,
-    elevation: 8,
-    zIndex: 10,
   },
   errorAlert: {
     backgroundColor: '#FEE2E2',
