@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Flyorago",
+    "slug": "flyorago-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/flyora logo png.png",
+    "scheme": "flyoragomobile",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.flyorago.app"
+    },
+    "splash": {
+      "image": "./assets/images/flyora logo png.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "android": {
+      "package": "com.flyorago.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/images/flyora logo png.png"
+      }
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/flyora logo png.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./assets/images/flyora logo png.png",
+          "imageWidth": 200
+        }
+      ],
+      "expo-secure-store",
+      "expo-font",
+      "expo-image-picker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7c05906e-3bf3-4536-8b10-4543898b60b2"
+      },
+      "router": {}
+    }
+  }
+}

@@ -285,6 +285,7 @@ CREATE TABLE IF NOT EXISTS shipments (
     price_paid          NUMERIC(12,2)     NOT NULL DEFAULT 0,
     category            shipment_category NOT NULL DEFAULT 'other',
     description         TEXT,
+    images              TEXT[]            DEFAULT '{}',
     status              shipment_status   NOT NULL DEFAULT 'PENDING',
     created_at          TIMESTAMPTZ       NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ       NOT NULL DEFAULT NOW(),

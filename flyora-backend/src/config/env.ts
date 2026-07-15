@@ -17,6 +17,11 @@ export const env = {
   dbHost: process.env.DB_HOST || 'localhost',
   dbPort: parseInt(process.env.DB_PORT || '5432', 10),
   dbDatabase: process.env.DB_DATABASE || 'flyorago',
+  jwtSecret: process.env.JWT_SECRET || 'your_super_secret_jwt_key_here',
+  smtpHost: process.env.SMTP_HOST || 'smtp.ethereal.email',
+  smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
+  smtpUser: process.env.SMTP_USER || '',
+  smtpPass: process.env.SMTP_PASS || '',
 } as const;
 
 export type Env = typeof env;

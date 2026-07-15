@@ -115,6 +115,62 @@ export const getUserTrips = async (req: Request, res: Response): Promise<void> =
   }
 };
 
+// Search Trips for a Route (Find Traveller)
+export const searchTrips = async (req: Request, res: Response): Promise<void> => {
+  const { fromCity, toCity, userId } = req.query;
+
+  if (!fromCity || !toCity) {
+    res.status(400).json({
+      success: false,
+      message: 'fromCity and toCity query parameters are required',
+    });
+    return;
+  }
+
+  try {
+    let queryStr = `
+       SELECT
+         t.id,
+         t.user_id as "userId",
+         u.full_name as "fullName",
+         t.from_city as "fromCity",
+         t.to_city as "toCity",
+         t.travel_date as "travelDate",
+         t.available_weight as "availableWeight",
+         t.price_per_kg as "pricePerKg",
+         t.notes as "description",
+         t.status,
+         t.created_at as "createdAt"
+       FROM trips t
+       JOIN users u ON t.user_id = u.id
+       WHERE t.from_city ILIKE $1 
+         AND t.to_city ILIKE $2 
+         AND t.status = 'ACTIVE'
+    `;
+    const params: any[] = [`%${fromCity}%`, `%${toCity}%`];
+
+    if (userId) {
+      queryStr += ` AND t.user_id != $3`;
+      params.push(userId);
+    }
+
+    queryStr += ` ORDER BY t.travel_date ASC`;
+
+    const tripsRes = await query(queryStr, params);
+
+    res.status(200).json({
+      success: true,
+      data: tripsRes.rows,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error searching trips',
+      error: error.message,
+    });
+  }
+};
+
 // Create a Shipment Request
 export const createShipment = async (req: Request, res: Response): Promise<void> => {
   const { userId, title, fromCity, toCity, deliveryDeadline, weight, pricePaid, category, description } = req.body;
@@ -969,4 +1025,131 @@ export const markNotificationRead = async (req: Request, res: Response): Promise
   }
 };
 
+// --- Bookings / Matching Flow ---
 
+// Create a booking request (Sender -> Traveller or Traveller -> Sender)
+export const createBookingRequest = async (req: Request, res: Response): Promise<void> => {
+  const { tripId, shipmentId, matchedWeight, totalAmount } = req.body;
+
+  if (!tripId || !shipmentId || !matchedWeight || totalAmount === undefined) {
+    res.status(400).json({ success: false, message: 'tripId, shipmentId, matchedWeight, and totalAmount are required' });
+    return;
+  }
+
+  try {
+    const insertRes = await query(
+      `INSERT INTO bookings (trip_id, shipment_id, matched_weight, total_amount, status)
+       VALUES ($1, $2, $3, $4, 'REQUESTED')
+       RETURNING id, trip_id as "tripId", shipment_id as "shipmentId", matched_weight as "matchedWeight", total_amount as "totalAmount", status`,
+      [tripId, shipmentId, Number(matchedWeight), Number(totalAmount)]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Booking request created successfully',
+      data: insertRes.rows[0],
+    });
+  } catch (error: any) {
+    // Handle unique constraint violation (duplicate request)
+    if (error.code === '23505') {
+      res.status(409).json({ success: false, message: 'A request for this match already exists.' });
+      return;
+    }
+    res.status(500).json({ success: false, message: 'Internal server error creating booking request', error: error.message });
+  }
+};
+
+// Accept a booking request
+export const acceptBookingRequest = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  try {
+    const updateRes = await query(
+      `UPDATE bookings SET status = 'ACCEPTED' WHERE id = $1 RETURNING id`,
+      [id]
+    );
+
+    if (updateRes.rowCount === 0) {
+      res.status(404).json({ success: false, message: 'Booking not found' });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking request accepted successfully',
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Internal server error accepting booking request', error: error.message });
+  }
+};
+
+// Get all bookings (requests and accepted) for a specific trip
+export const getTripBookings = async (req: Request, res: Response): Promise<void> => {
+  const { tripId } = req.params;
+
+  try {
+    const resDb = await query(
+      `SELECT 
+         b.id,
+         b.trip_id as "tripId",
+         b.shipment_id as "shipmentId",
+         b.matched_weight as "matchedWeight",
+         b.total_amount as "totalAmount",
+         b.status,
+         s.title,
+         s.from_city as "fromCity",
+         s.to_city as "toCity",
+         s.weight,
+         s.price_paid as "pricePaid",
+         u.full_name as "senderName"
+       FROM bookings b
+       JOIN shipments s ON b.shipment_id = s.id
+       JOIN users u ON s.user_id = u.id
+       WHERE b.trip_id = $1
+       ORDER BY b.created_at DESC`,
+      [tripId]
+    );
+
+    res.status(200).json({
+      success: true,
+      data: resDb.rows,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Internal server error getting trip bookings', error: error.message });
+  }
+};
+
+// Get all bookings (requests and accepted) for a specific shipment
+export const getShipmentBookings = async (req: Request, res: Response): Promise<void> => {
+  const { shipmentId } = req.params;
+
+  try {
+    const resDb = await query(
+      `SELECT 
+         b.id,
+         b.trip_id as "tripId",
+         b.shipment_id as "shipmentId",
+         b.matched_weight as "matchedWeight",
+         b.total_amount as "totalAmount",
+         b.status,
+         t.from_city as "fromCity",
+         t.to_city as "toCity",
+         t.travel_date as "travelDate",
+         t.price_per_kg as "pricePerKg",
+         u.full_name as "travellerName"
+       FROM bookings b
+       JOIN trips t ON b.trip_id = t.id
+       JOIN users u ON t.user_id = u.id
+       WHERE b.shipment_id = $1
+       ORDER BY b.created_at DESC`,
+      [shipmentId]
+    );
+
+    res.status(200).json({
+      success: true,
+      data: resDb.rows,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Internal server error getting shipment bookings', error: error.message });
+  }
+};

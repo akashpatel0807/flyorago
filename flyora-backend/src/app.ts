@@ -35,7 +35,7 @@ const createApp = (): Application => {
       }
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-User-Id'],
     credentials: true,
     maxAge: 86400, // 24 hours
   }));

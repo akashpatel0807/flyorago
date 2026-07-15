@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { query } from '../services/db.service';
-
+import jwt from 'jsonwebtoken';
+import { env } from '../config/env';
+import { sendPasswordResetEmail } from '../services/email.service';
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const { fullName, email, phone, password } = req.body;
 
@@ -126,5 +128,74 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       message: 'Internal server error during login',
       error: error.message,
     });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400).json({ success: false, message: 'Email is required' });
+    return;
+  }
+
+  try {
+    const trimmedEmail = email.toLowerCase().trim();
+
+    // Check if user exists
+    const userRes = await query('SELECT id FROM users WHERE email = $1', [trimmedEmail]);
+    if (userRes.rowCount === 0) {
+      // Return 200 to prevent email enumeration attacks
+      res.status(200).json({ success: true, message: 'If that email is in our database, we will send a password reset link to it.' });
+      return;
+    }
+
+    const userId = userRes.rows[0].id;
+
+    // Generate JWT Reset Token (valid for 15 minutes)
+    const resetToken = jwt.sign({ userId }, env.jwtSecret, { expiresIn: '15m' });
+
+    // Send email
+    await sendPasswordResetEmail(trimmedEmail, resetToken);
+
+    res.status(200).json({
+      success: true,
+      message: 'If that email is in our database, we will send a password reset link to it.',
+    });
+  } catch (error: any) {
+    console.error('[AUTH_ERROR] Error in forgotPassword:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    res.status(400).json({ success: false, message: 'Token and new password are required' });
+    return;
+  }
+
+  try {
+    // Verify Token
+    const decoded = jwt.verify(token, env.jwtSecret) as { userId: string };
+    
+    // Hash new password
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    // Update password in database
+    await query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, decoded.userId]);
+
+    res.status(200).json({ success: true, message: 'Password has been reset successfully' });
+  } catch (error: any) {
+    console.error('[AUTH_ERROR] Error in resetPassword:', error);
+    if (error.name === 'TokenExpiredError') {
+      res.status(400).json({ success: false, message: 'Reset link has expired. Please request a new one.' });
+    } else if (error.name === 'JsonWebTokenError') {
+      res.status(400).json({ success: false, message: 'Invalid reset link.' });
+    } else {
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
   }
 };
