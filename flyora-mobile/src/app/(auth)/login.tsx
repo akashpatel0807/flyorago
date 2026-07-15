@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -19,11 +19,14 @@ import { Theme } from '../../constants/theme';
 import { Lock, Eye, EyeOff, User, ArrowRight } from 'lucide-react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import Animated, {
   FadeInDown,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
 } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
@@ -96,6 +99,32 @@ const StyledInput = ({
   );
 };
 
+// TravelBackgroundGraphics: Renders dotted travel curves behind the woman
+const TravelBackgroundGraphics = () => {
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Svg style={StyleSheet.absoluteFill}>
+        {/* Main Curved flight path */}
+        <Path
+          d="M 20 180 Q 90 100 160 190 T 320 110"
+          fill="none"
+          stroke="rgba(14, 139, 109, 0.08)"
+          strokeWidth="1.5"
+          strokeDasharray="4,4"
+        />
+        {/* Secondary route connection */}
+        <Path
+          d="M 120 220 Q 150 140 210 160"
+          fill="none"
+          stroke="rgba(14, 139, 109, 0.05)"
+          strokeWidth="1"
+          strokeDasharray="3,3"
+        />
+      </Svg>
+    </View>
+  );
+};
+
 // KeyboardAvoidingWrapper: Only wraps KeyboardAvoidingView on iOS to prevent Android soft-keyboard conflicts
 const KeyboardAvoidingWrapper = ({ children }: { children: React.ReactNode }) => {
   if (Platform.OS === 'ios') {
@@ -118,20 +147,133 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Reanimated Button Press Scale Animation
-  const scale = useSharedValue(1);
+  // Reanimated Shared Values for Micro Animations
+  const glowScale1 = useSharedValue(1);
+  const glowScale2 = useSharedValue(1);
+  const planeX = useSharedValue(0);
+  const planeY = useSharedValue(0);
+  const planeRotation = useSharedValue(0);
+  const pinY = useSharedValue(0);
+  const buttonScale = useSharedValue(1);
+  const heroScale = useSharedValue(1);
+  const heroY = useSharedValue(0);
+
+  useEffect(() => {
+    // 1. Slow glowing background breathing animation (24s loop)
+    glowScale1.value = withRepeat(
+      withSequence(
+        withTiming(1.2, { duration: 12000 }),
+        withTiming(0.9, { duration: 12000 })
+      ),
+      -1,
+      true
+    );
+    glowScale2.value = withRepeat(
+      withSequence(
+        withTiming(0.85, { duration: 10000 }),
+        withTiming(1.15, { duration: 10000 })
+      ),
+      -1,
+      true
+    );
+
+    // 2. Slow airplane floating animation (20s loop)
+    planeX.value = withRepeat(
+      withSequence(
+        withTiming(12, { duration: 6000 }),
+        withTiming(-12, { duration: 8000 }),
+        withTiming(0, { duration: 6000 })
+      ),
+      -1,
+      true
+    );
+    planeY.value = withRepeat(
+      withSequence(
+        withTiming(-8, { duration: 7000 }),
+        withTiming(8, { duration: 7000 }),
+        withTiming(0, { duration: 6000 })
+      ),
+      -1,
+      true
+    );
+    planeRotation.value = withRepeat(
+      withSequence(
+        withTiming(4, { duration: 8000 }),
+        withTiming(-4, { duration: 8000 }),
+        withTiming(0, { duration: 6000 })
+      ),
+      -1,
+      true
+    );
+
+    // 3. Location pin vertical bobbing (5s loop)
+    pinY.value = withRepeat(
+      withSequence(
+        withTiming(-5, { duration: 2500 }),
+        withTiming(5, { duration: 2500 })
+      ),
+      -1,
+      true
+    );
+
+    // 4. Hero girl + suitcase floating scale animation (6s loop)
+    heroScale.value = withRepeat(
+      withSequence(
+        withTiming(1.02, { duration: 3000 }),
+        withTiming(1.00, { duration: 3000 })
+      ),
+      -1,
+      true
+    );
+    heroY.value = withRepeat(
+      withSequence(
+        withTiming(-3, { duration: 3000 }),
+        withTiming(3, { duration: 3000 })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  // Animated Styles
+  const animatedGlowStyle1 = useAnimatedStyle(() => ({
+    transform: [{ scale: glowScale1.value }],
+  }));
+
+  const animatedGlowStyle2 = useAnimatedStyle(() => ({
+    transform: [{ scale: glowScale2.value }],
+  }));
+
+  const animatedPlaneStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: planeX.value },
+      { translateY: planeY.value },
+      { rotate: `${planeRotation.value}deg` },
+    ],
+  }));
+
+  const animatedPinStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: pinY.value }],
+  }));
+
+  const animatedHeroStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: heroScale.value },
+      { translateY: heroY.value },
+    ],
+  }));
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: buttonScale.value }],
+  }));
+
+  // Login Button Press Feedbacks
   const onPressIn = () => {
-    scale.value = withTiming(0.96, { duration: 100 });
+    buttonScale.value = withTiming(0.96, { duration: 100 });
   };
   const onPressOut = () => {
-    scale.value = withTiming(1, { duration: 100 });
+    buttonScale.value = withTiming(1, { duration: 100 });
   };
-
-  const animatedButtonStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scale.value }],
-    };
-  });
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -182,8 +324,30 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.mainContainer}>
-            {/* Top Illustration Section */}
+            {/* Top Illustration Section (approx. 38% height) */}
             <View style={styles.topSection}>
+              {/* Glowing background circles for breathing gradient */}
+              <Animated.View style={[styles.glowCircle1, animatedGlowStyle1]} />
+              <Animated.View style={[styles.glowCircle2, animatedGlowStyle2]} />
+
+              {/* Dotted Flight curves */}
+              <TravelBackgroundGraphics />
+
+              {/* Animated Floating Airplane */}
+              <Animated.View style={[styles.floatingPlane, animatedPlaneStyle]}>
+                <Ionicons name="plane" size={14} color={EMERALD_GREEN} />
+              </Animated.View>
+
+              {/* Animated Floating Location Pin */}
+              <Animated.View style={[styles.floatingPin, animatedPinStyle]}>
+                <Ionicons name="location" size={16} color={EMERALD_GREEN} />
+              </Animated.View>
+
+              {/* Static background Location Pin */}
+              <View style={styles.staticPin}>
+                <Ionicons name="location" size={14} color="rgba(14, 139, 109, 0.4)" />
+              </View>
+
               {/* Brand Header */}
               <View style={styles.brandHeader}>
                 <Image
@@ -203,12 +367,17 @@ export default function LoginScreen() {
                 </Text>
               </View>
 
-              {/* Portrait Lady Image */}
-              <Image
-                source={require('../../../assets/images/girl2.png')}
-                style={styles.headerImage}
-                resizeMode="contain"
-              />
+              {/* Portrait Lady Image with scale/float breathing animation */}
+              <Animated.View
+                entering={FadeInDown.delay(150).duration(800)}
+                style={[styles.imageWrapperContainer, animatedHeroStyle]}
+              >
+                <Image
+                  source={require('../../../assets/images/girl2.png')}
+                  style={styles.headerImage}
+                  resizeMode="contain"
+                />
+              </Animated.View>
             </View>
 
             {/* Form Section */}
@@ -335,13 +504,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topSection: {
-    height: height * 0.35,
+    height: height * 0.38,
     paddingTop: 16,
     paddingHorizontal: 24,
     position: 'relative',
     justifyContent: 'flex-end',
     paddingBottom: 40,
-    backgroundColor: '#F0FDF8', // Soft green background
+    backgroundColor: '#FFFFFF', // Base white
+    overflow: 'hidden',
+  },
+  glowCircle1: {
+    position: 'absolute',
+    top: -60,
+    right: -60,
+    width: width * 0.75,
+    height: width * 0.75,
+    borderRadius: (width * 0.75) / 2,
+    backgroundColor: 'rgba(232, 248, 244, 0.65)', // Mint glow
+    zIndex: 0,
+  },
+  glowCircle2: {
+    position: 'absolute',
+    bottom: -30,
+    left: -40,
+    width: width * 0.55,
+    height: width * 0.55,
+    borderRadius: (width * 0.55) / 2,
+    backgroundColor: 'rgba(14, 139, 109, 0.045)', // Emerald glow
+    zIndex: 0,
+  },
+  floatingPlane: {
+    position: 'absolute',
+    top: 75,
+    right: width * 0.44,
+    opacity: 0.08,
+    zIndex: 1,
+  },
+  floatingPin: {
+    position: 'absolute',
+    top: 140,
+    left: width * 0.46,
+    opacity: 0.08,
+    zIndex: 1,
+  },
+  staticPin: {
+    position: 'absolute',
+    bottom: 60,
+    left: 28,
+    opacity: 0.06,
+    zIndex: 1,
   },
   brandHeader: {
     flexDirection: 'row',
@@ -376,11 +587,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: Theme.typography.body.fontFamily,
     fontSize: 13,
-    color: Theme.colors['gray-500'],
+    color: '#6B7280',
     lineHeight: 18,
     marginTop: 10,
   },
-  headerImage: {
+  imageWrapperContainer: {
     position: 'absolute',
     right: 0,
     bottom: -15,
@@ -388,12 +599,16 @@ const styles = StyleSheet.create({
     height: height * 0.32,
     zIndex: 1,
   },
+  headerImage: {
+    width: '100%',
+    height: '100%',
+  },
   formCard: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 36,
     borderTopRightRadius: 36,
     paddingHorizontal: 24,
-    paddingTop: 36,
+    paddingTop: 32,
     paddingBottom: 40,
     marginTop: -30,
     shadowColor: '#000',
@@ -448,7 +663,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Theme.typography.body.fontFamily,
     fontSize: 14,
-    color: Theme.colors.navy,
+    color: '#111827',
     height: '100%',
   },
   eyeBtn: {
@@ -537,7 +752,7 @@ const styles = StyleSheet.create({
   signupText: {
     fontFamily: Theme.typography.body.fontFamily,
     fontSize: 14,
-    color: Theme.colors['gray-500'],
+    color: '#6B7280',
   },
   signupLink: {
     fontFamily: Theme.typography.h3.fontFamily,
