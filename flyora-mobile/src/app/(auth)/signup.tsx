@@ -17,9 +17,18 @@ import { useToastStore } from '../../store';
 import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
 import { ArrowLeft, Lock, Eye, EyeOff, Mail, Phone, User, ChevronDown, ArrowRight } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
+const EMERALD_GREEN = '#0E8B6D';
 
 interface StyledInputProps {
   placeholder: string;
@@ -31,7 +40,7 @@ interface StyledInputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
-// Flat grey TextInput with stable local focus styling matching the mockup
+// Mockup-matching rounded white card TextInput with soft shadow and stable focus
 const StyledInput = ({
   placeholder,
   icon: Icon,
@@ -55,7 +64,7 @@ const StyledInput = ({
       >
         <Icon
           size={18}
-          color={isFocused ? Theme.colors.teal : '#94A3B8'}
+          color={isFocused ? EMERALD_GREEN : '#94A3B8'}
           style={styles.inputIcon}
         />
         <TextInput
@@ -114,6 +123,21 @@ export default function SignupScreen() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const [isPhoneFocused, setIsPhoneFocused] = useState(false);
+
+  // Reanimated Button Press Scale Animation
+  const scale = useSharedValue(1);
+  const onPressIn = () => {
+    scale.value = withTiming(0.96, { duration: 100 });
+  };
+  const onPressOut = () => {
+    scale.value = withTiming(1, { duration: 100 });
+  };
+
+  const animatedButtonStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   const handleSignup = async () => {
     if (!fullName || !email || !phone || !password || !confirmPassword) {
@@ -182,16 +206,16 @@ export default function SignupScreen() {
                 <Text style={styles.brandName}>Flyorago</Text>
               </View>
 
-              {/* Centered Welcome text layout */}
+              {/* Welcome text layout */}
               <View style={styles.titleContainer}>
                 <Text style={styles.welcomeText}>Create</Text>
-                <Text style={[styles.welcomeText, { color: Theme.colors.teal }]}>Account</Text>
+                <Text style={[styles.welcomeText, { color: EMERALD_GREEN }]}>Account</Text>
                 <Text style={styles.subtitle}>
                   Join Flyorago and start shipping{'\n'}smarter today.
                 </Text>
               </View>
 
-              {/* Globe and Boxes Illustration for HD cover sizing */}
+              {/* Globe and Boxes Illustration */}
               <Image
                 source={require('../../../assets/images/onbording second screen.png')}
                 style={styles.headerImage}
@@ -208,32 +232,36 @@ export default function SignupScreen() {
               ) : null}
 
               {/* Full Name Field */}
-              <StyledInput
-                placeholder="Full Name"
-                icon={User}
-                value={fullName}
-                onChangeText={setFullName}
-              />
+              <Animated.View entering={FadeInDown.delay(100).duration(600).springify()}>
+                <StyledInput
+                  placeholder="Full Name"
+                  icon={User}
+                  value={fullName}
+                  onChangeText={setFullName}
+                />
+              </Animated.View>
 
               {/* Email Address Field */}
-              <StyledInput
-                placeholder="Email Address"
-                icon={Mail}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <Animated.View entering={FadeInDown.delay(150).duration(600).springify()}>
+                <StyledInput
+                  placeholder="Email Address"
+                  icon={Mail}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </Animated.View>
 
               {/* Custom Phone Number Field (mockup flag dropdown & code) */}
-              <View style={styles.inputGroup}>
+              <Animated.View entering={FadeInDown.delay(200).duration(600).springify()} style={styles.inputGroup}>
                 <View
                   style={[
                     styles.phoneInputWrapper,
                     isPhoneFocused && styles.inputWrapperFocused,
                   ]}
                 >
-                  <Phone size={18} color={isPhoneFocused ? Theme.colors.teal : '#94A3B8'} style={styles.inputIcon} />
+                  <Phone size={18} color={isPhoneFocused ? EMERALD_GREEN : '#94A3B8'} style={styles.inputIcon} />
                   
                   {/* Flag Selector */}
                   <View style={styles.flagDropdown}>
@@ -261,71 +289,113 @@ export default function SignupScreen() {
                     onBlur={() => setIsPhoneFocused(false)}
                   />
                 </View>
-              </View>
+              </Animated.View>
 
               {/* Password Field */}
-              <StyledInput
-                placeholder="Password"
-                icon={Lock}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <Animated.View entering={FadeInDown.delay(250).duration(600).springify()}>
+                <StyledInput
+                  placeholder="Password"
+                  icon={Lock}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </Animated.View>
 
               {/* Confirm Password Field */}
-              <StyledInput
-                placeholder="Confirm Password"
-                icon={Lock}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-              />
+              <Animated.View entering={FadeInDown.delay(300).duration(600).springify()}>
+                <StyledInput
+                  placeholder="Confirm Password"
+                  icon={Lock}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                />
+              </Animated.View>
 
               {/* Circular Radio Checkbox for Terms */}
-              <Pressable
-                style={styles.termsRow}
-                onPress={() => setAgreeTerms(!agreeTerms)}
-              >
-                <View
-                  style={[
-                    styles.circleCheckbox,
-                    agreeTerms && styles.circleCheckboxChecked,
-                  ]}
+              <Animated.View entering={FadeInDown.delay(320).duration(600).springify()}>
+                <Pressable
+                  style={styles.termsRow}
+                  onPress={() => setAgreeTerms(!agreeTerms)}
                 >
-                  {agreeTerms && <View style={styles.circleCheckboxInner} />}
-                </View>
-                <Text style={styles.termsText}>
-                  I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-                  <Text style={styles.termsLink}>Privacy Policy</Text>
-                </Text>
-              </Pressable>
+                  <View
+                    style={[
+                      styles.circleCheckbox,
+                      agreeTerms && styles.circleCheckboxChecked,
+                    ]}
+                  >
+                    {agreeTerms && <View style={styles.circleCheckboxInner} />}
+                  </View>
+                  <Text style={styles.termsText}>
+                    I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
+                    <Text style={styles.termsLink}>Privacy Policy</Text>
+                  </Text>
+                </Pressable>
+              </Animated.View>
 
-              {/* Create Account Button with Chevron circle */}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.signupBtn,
-                  pressed && { opacity: 0.9, scale: 0.98 },
-                  loading && { opacity: 0.7 },
-                ]}
-                onPress={handleSignup}
-                disabled={loading}
-              >
-                <View style={{ width: 24 }} />
-                <Text style={styles.signupBtnText}>
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </Text>
-                <View style={styles.buttonArrowCircle}>
-                  <ArrowRight size={14} color={Theme.colors.teal} />
+              {/* Create Account Button with Reanimated Press scaling & Gradient */}
+              <Animated.View entering={FadeInDown.delay(350).duration(600).springify()}>
+                <Pressable
+                  onPressIn={onPressIn}
+                  onPressOut={onPressOut}
+                  onPress={handleSignup}
+                  disabled={loading}
+                >
+                  <AnimatedLinearGradient
+                    colors={[EMERALD_GREEN, '#0B7A5F']}
+                    style={[
+                      styles.signupBtn,
+                      animatedButtonStyle,
+                      loading && { opacity: 0.7 },
+                    ]}
+                  >
+                    <View style={{ width: 24 }} />
+                    <Text style={styles.signupBtnText}>
+                      {loading ? 'Creating Account...' : 'Create Account'}
+                    </Text>
+                    <View style={styles.buttonArrowCircle}>
+                      <ArrowRight size={14} color={EMERALD_GREEN} />
+                    </View>
+                  </AnimatedLinearGradient>
+                </Pressable>
+              </Animated.View>
+
+              {/* Social Login Placeholders */}
+              <Animated.View entering={FadeInDown.delay(400).duration(600).springify()}>
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>Or sign up with</Text>
+                  <View style={styles.dividerLine} />
                 </View>
-              </Pressable>
+
+                <View style={styles.socialRow}>
+                  {/* Google Button */}
+                  <Pressable style={styles.socialBtn}>
+                    <AntDesign name="google" size={24} color="#EA4335" />
+                  </Pressable>
+
+                  {/* Apple Button */}
+                  <Pressable style={styles.socialBtn}>
+                    <AntDesign name="apple1" size={24} color="#000000" />
+                  </Pressable>
+
+                  {/* Facebook Button */}
+                  <Pressable style={styles.socialBtn}>
+                    <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                  </Pressable>
+                </View>
+              </Animated.View>
 
               {/* Login Link */}
-              <View style={styles.loginRow}>
-                <Text style={styles.loginText}>Already have an account? </Text>
-                <Pressable onPress={() => router.replace('/(auth)/login')}>
-                  <Text style={styles.loginLink}>Login</Text>
-                </Pressable>
-              </View>
+              <Animated.View entering={FadeInDown.delay(450).duration(600).springify()}>
+                <View style={styles.loginRow}>
+                  <Text style={styles.loginText}>Already have an account? </Text>
+                  <Pressable onPress={() => router.replace('/(auth)/login')}>
+                    <Text style={[styles.loginLink, { color: EMERALD_GREEN }]}>Login</Text>
+                  </Pressable>
+                </View>
+              </Animated.View>
             </View>
           </View>
         </ScrollView>
@@ -446,16 +516,23 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 56,
+    borderWidth: 1,
+    borderColor: '#F1F5F9', // Very soft border
+    borderRadius: 18,
+    height: 58,
     paddingHorizontal: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
+    // Soft elevation shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
   },
   inputWrapperFocused: {
-    borderColor: Theme.colors.teal,
-    backgroundColor: '#FFFFFF',
+    borderColor: EMERALD_GREEN,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
   },
   inputIcon: {
     marginRight: 12,
@@ -470,12 +547,18 @@ const styles = StyleSheet.create({
   phoneInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 56,
+    borderWidth: 1,
+    borderColor: '#F1F5F9', // Very soft border
+    borderRadius: 18,
+    height: 58,
     paddingHorizontal: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
+    // Soft elevation shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
   },
   flagDropdown: {
     flexDirection: 'row',
@@ -532,13 +615,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   circleCheckboxChecked: {
-    borderColor: Theme.colors.teal,
+    borderColor: EMERALD_GREEN,
   },
   circleCheckboxInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Theme.colors.teal,
+    backgroundColor: EMERALD_GREEN,
   },
   termsText: {
     flex: 1,
@@ -548,19 +631,18 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   termsLink: {
-    color: Theme.colors.teal,
+    color: EMERALD_GREEN,
     fontWeight: 'bold',
   },
   signupBtn: {
-    backgroundColor: Theme.colors.teal,
-    height: 56,
-    borderRadius: 16,
+    height: 58,
+    borderRadius: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 24,
-    shadowColor: Theme.colors.teal,
+    shadowColor: EMERALD_GREEN,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -580,6 +662,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: 13,
+    color: '#94A3B8',
+    marginHorizontal: 12,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 28,
+  },
+  socialBtn: {
+    width: 80,
+    height: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
   loginRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -593,7 +712,6 @@ const styles = StyleSheet.create({
   loginLink: {
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 14,
-    color: Theme.colors.teal,
     fontWeight: 'bold',
   },
 });
