@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Theme } from '../constants/theme';
+import { useAuthStore } from '../store';
 import { Plane, Tag, Truck, ShieldCheck, Shield, ArrowRight, Globe, CheckCircle } from 'lucide-react-native';
 import Animated, {
   FadeInDown,
@@ -137,6 +138,12 @@ export default function AdvancedOnboardingScreen() {
   const scrollX = useSharedValue(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<Animated.FlatList<any>>(null);
+  const completeOnboarding = useAuthStore((state) => state.completeOnboarding);
+
+  const handleComplete = async () => {
+    await completeOnboarding();
+    router.replace('/(auth)/signup');
+  };
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -231,15 +238,9 @@ export default function AdvancedOnboardingScreen() {
             <Animated.View entering={FadeInDown.springify().damping(14)} style={styles.authButtonsContainer}>
               <Pressable
                 style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.96 }] }]}
-                onPress={() => router.push('/(auth)/login')}
+                onPress={handleComplete}
               >
-                <Text style={styles.primaryBtnText}>Login to Continue</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.96 }] }]}
-                onPress={() => router.push('/(auth)/signup')}
-              >
-                <Text style={styles.secondaryBtnText}>Create an Account</Text>
+                <Text style={styles.primaryBtnText}>Get Started</Text>
               </Pressable>
             </Animated.View>
           ) : (
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imageContainer: {
-    height: height * 0.33,
+    height: height * 0.25,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
@@ -353,17 +354,17 @@ const styles = StyleSheet.create({
   },
   featureItem: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 8,
     alignItems: 'flex-start',
   },
   featureIconBox: {
-    width: 38,
-    height: 38,
+    width: 34,
+    height: 34,
     backgroundColor: '#F0F9F8',
-    borderRadius: 12,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 14,
     borderWidth: 1,
     borderColor: '#E1F0EE',
   },

@@ -11,12 +11,14 @@ interface AuthState {
   adminToken: string | null;
   adminUsername: string | null;
   isLoading: boolean;
+  hasSeenOnboarding: boolean;
   
   initialize: () => Promise<void>;
   login: (userId: string, userName: string, userEmail: string, userRole: string) => Promise<void>;
   adminLogin: (token: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
   adminLogout: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -29,6 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   adminToken: null,
   adminUsername: null,
   isLoading: true,
+  hasSeenOnboarding: false,
 
   initialize: async () => {
     try {
@@ -38,6 +41,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const userRole = await SecureStore.getItemAsync('flyora_user_role');
       const adminToken = await SecureStore.getItemAsync('flyora_admin_token');
       const adminUsername = await SecureStore.getItemAsync('flyora_admin_username');
+      const onboardingCompleted = await SecureStore.getItemAsync('flyora_has_seen_onboarding');
 
       set({
         userId,
@@ -48,6 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         adminToken,
         adminUsername,
         isAdminAuthenticated: !!adminToken,
+        hasSeenOnboarding: onboardingCompleted === 'true',
         isLoading: false,
       });
     } catch (error) {
@@ -121,6 +126,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (error) {
       console.error('Failed to clear admin auth details:', error);
+    }
+  },
+
+  completeOnboarding: async () => {
+    try {
+      await SecureStore.setItemAsync('flyora_has_seen_onboarding', 'true');
+      set({ hasSeenOnboarding: true });
+    } catch (error) {
+      console.error('Failed to store onboarding status:', error);
     }
   },
 }));

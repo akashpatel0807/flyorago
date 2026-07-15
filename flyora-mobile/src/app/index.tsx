@@ -47,7 +47,7 @@ export default function LandingScreen() {
   const activeColors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const router = useRouter();
   
-  const { isAuthenticated, userRole } = useAuthStore();
+  const { isAuthenticated, userRole, hasSeenOnboarding } = useAuthStore();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   // Auto redirect if already logged in
@@ -57,6 +57,9 @@ export default function LandingScreen() {
     }
     return <Redirect href={"/(tabs)" as any} />;
   } else {
+    if (hasSeenOnboarding) {
+      return <Redirect href="/(auth)/login" />;
+    }
     return <Redirect href="/onboarding" />;
   }
 
