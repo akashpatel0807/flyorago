@@ -141,14 +141,14 @@ export default function ShipmentsScreen() {
     switch (status) {
       case 'DELIVERED':
         return (
-          <View style={[styles.statusPill, { backgroundColor: '#E6F4F1' }]}>
-            <Text style={[styles.statusText, { color: Theme.colors.teal }]}>Delivered</Text>
+          <View style={[styles.statusPill, { backgroundColor: '#D1FAE5' }]}>
+            <Text style={[styles.statusText, { color: '#065F46' }]}>Delivered</Text>
           </View>
         );
       case 'CANCELLED':
         return (
           <View style={[styles.statusPill, { backgroundColor: '#FEE2E2' }]}>
-            <Text style={[styles.statusText, { color: '#EF4444' }]}>Cancelled</Text>
+            <Text style={[styles.statusText, { color: '#991B1B' }]}>Cancelled</Text>
           </View>
         );
       case 'IN_TRANSIT':
@@ -156,7 +156,7 @@ export default function ShipmentsScreen() {
       default:
         return (
           <View style={[styles.statusPill, { backgroundColor: '#EFF6FF' }]}>
-            <Text style={[styles.statusText, { color: '#3B82F6' }]}>In Transit</Text>
+            <Text style={[styles.statusText, { color: '#1E40AF' }]}>In Transit</Text>
           </View>
         );
     }
