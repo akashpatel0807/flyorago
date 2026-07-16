@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,6 +7,7 @@ import {
   Pressable,
   TextInput,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../../constants/theme';
@@ -43,12 +44,97 @@ import { Image } from 'expo-image';
 import Animated, { FadeInDown, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const isSmallScreen = width < 380 || height < 700;
 
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useAuthStore } from '../../store';
+import { apiClient } from '../../services/apiClient';
+import * as Location from 'expo-location';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { userId, userName } = useAuthStore();
+  const [locationText, setLocationText] = useState('Detecting location...');
+  const [activeTrip, setActiveTrip] = useState<any | null>(null);
+  const [trendingTrips, setTrendingTrips] = useState<any[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch device GPS location live
+  useEffect(() => {
+    (async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setLocationText('Location permission denied');
+          return;
+        }
+
+        // Try to get the last known cached position first (takes milliseconds)
+        let loc = await Location.getLastKnownPositionAsync();
+        if (!loc) {
+          loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        }
+
+        let reverse = await Location.reverseGeocodeAsync({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+
+        if (reverse && reverse.length > 0) {
+          const address = reverse[0];
+          const city = address.city || address.subregion || address.district || 'Ahmedabad';
+          const country = address.country || 'India';
+          setLocationText(`${city}, ${country}`);
+        } else {
+          setLocationText('Ahmedabad, India');
+        }
+      } catch (error) {
+        console.warn('Error fetching device location:', error);
+        setLocationText('Ahmedabad, India');
+      }
+    })();
+  }, []);
+
+  // Fetch active trips and notifications live
+  const fetchDashboardData = useCallback(async () => {
+    if (!userId) return;
+    try {
+      // 1. Fetch user's trips to find if there is an active one
+      const tripsRes = await apiClient.get(`/api/dashboard/trips/${userId}`);
+      if (tripsRes.data && tripsRes.data.success) {
+        const userTrips = tripsRes.data.data;
+        const active = userTrips.find((t: any) => t.status === 'ACTIVE');
+        setActiveTrip(active || null);
+      }
+
+      // 2. Fetch active/trending trips
+      const activeTripsRes = await apiClient.get('/api/admin/trips');
+      if (activeTripsRes.data && activeTripsRes.data.success) {
+        const allTrips = activeTripsRes.data.data;
+        const trending = allTrips.filter((t: any) => t.status === 'ACTIVE' && t.userId !== userId);
+        setTrendingTrips(trending.slice(0, 10));
+      }
+
+      // 3. Fetch notifications to check if there are unread ones
+      const notificationsRes = await apiClient.get(`/api/dashboard/notifications/${userId}`);
+      if (notificationsRes.data && notificationsRes.data.success) {
+        const unreadExists = notificationsRes.data.data.some((n: any) => !n.isRead);
+        setUnreadNotifications(unreadExists);
+      }
+    } catch (error) {
+      console.warn('Error fetching dashboard overview data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchDashboardData();
+    }, [fetchDashboardData])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,7 +146,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <Pressable style={styles.locationSelector}>
             <LucideMapPin size={20} color={Theme.colors.navy} />
-            <Text style={styles.locationText}>Ahmedabad, India</Text>
+            <Text style={styles.locationText}>{locationText}</Text>
             <LucideChevronDown size={16} color={Theme.colors.navy} />
           </Pressable>
           <Pressable
@@ -68,7 +154,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/notifications')}
           >
             <LucideBell size={24} color={Theme.colors.navy} />
-            <View style={styles.notificationDot} />
+            {unreadNotifications && <View style={styles.notificationDot} />}
           </Pressable>
         </View>
 
@@ -76,7 +162,7 @@ export default function HomeScreen() {
         <View style={styles.greetingSection}>
           <View style={styles.greetingTextContainer}>
             <Animated.Text entering={FadeInDown.delay(100)} style={styles.greeting}>
-              Hello, Aakash 👋
+              Hello, {userName || 'Aakash'} 👋
             </Animated.Text>
             <Animated.Text entering={FadeInDown.delay(200)} style={styles.mainTitle}>
               Where are you{'\n'}
@@ -112,7 +198,7 @@ export default function HomeScreen() {
             <Text style={styles.actionCardSubtitle}>Send your package with a traveler</Text>
             <View style={styles.actionCardIconWrapper}>
               <View style={styles.mockBoxIcon}>
-                <LucidePackage size={32} color={Theme.colors.white} />
+                <LucidePackage size={isSmallScreen ? 24 : 32} color={Theme.colors.white} />
               </View>
             </View>
           </Animated.View>
@@ -122,7 +208,7 @@ export default function HomeScreen() {
             <Text style={styles.actionCardSubtitle}>Earn by delivering packages</Text>
             <View style={styles.actionCardIconWrapper}>
               <View style={[styles.mockBoxIcon, { backgroundColor: Theme.colors.teal }]}>
-                <LucideBriefcase size={32} color={Theme.colors.white} />
+                <LucideBriefcase size={isSmallScreen ? 24 : 32} color={Theme.colors.white} />
               </View>
             </View>
           </Animated.View>
@@ -132,55 +218,82 @@ export default function HomeScreen() {
         <Animated.View entering={FadeInDown.delay(600)} style={styles.activeTripSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Current Active Trip</Text>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
-            </View>
+            {activeTrip && (
+              <View style={styles.liveBadge}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveText}>LIVE</Text>
+              </View>
+            )}
           </View>
           
-          <View style={styles.activeTripCard}>
-            <View style={styles.activeTripTop}>
-              <View style={styles.routeContainer}>
-                <Text style={styles.cityText}>Ahmedabad</Text>
-                <LucideArrowRight size={20} color={Theme.colors.teal} />
-                <Text style={styles.cityText}>Mumbai</Text>
-              </View>
-              <LucidePlaneTakeoff size={24} color={Theme.colors.navy} />
+          {loading ? (
+            <View style={[styles.activeTripCard, { justifyContent: 'center', alignItems: 'center', paddingVertical: 30 }]}>
+              <ActivityIndicator size="small" color={Theme.colors.teal} />
             </View>
-            
-            <View style={styles.activeTripStatus}>
-              <View style={styles.statusItem}>
-                <LucideClock size={16} color={Theme.colors['gray-500']} />
-                <Text style={styles.statusText}>Departs in 2h 45m</Text>
+          ) : activeTrip ? (
+            <View style={styles.activeTripCard}>
+              <View style={styles.activeTripTop}>
+                <View style={styles.routeContainer}>
+                  <Text style={styles.cityText}>{activeTrip.fromCity}</Text>
+                  <LucideArrowRight size={20} color={Theme.colors.teal} />
+                  <Text style={styles.cityText}>{activeTrip.toCity}</Text>
+                </View>
+                <LucidePlaneTakeoff size={24} color={Theme.colors.navy} />
               </View>
-              <View style={styles.statusItem}>
-                <LucideCheckCircle2 size={16} color={Theme.colors.teal} />
-                <Text style={[styles.statusText, { color: Theme.colors.teal }]}>On Time</Text>
+              
+              <View style={styles.activeTripStatus}>
+                <View style={styles.statusItem}>
+                  <LucideClock size={16} color={Theme.colors['gray-500']} />
+                  <Text style={styles.statusText}>
+                    Travel: {new Date(activeTrip.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <LucideCheckCircle2 size={16} color={Theme.colors.teal} />
+                  <Text style={[styles.statusText, { color: Theme.colors.teal }]}>Active</Text>
+                </View>
               </View>
-            </View>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <View>
-                <Text style={{ fontFamily: Theme.typography.bodySmall.fontFamily, fontSize: 11, color: Theme.colors['gray-500'] }}>Available Capacity</Text>
-                <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 14, color: Theme.colors.navy }}>15 kg Left</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <View>
+                  <Text style={{ fontFamily: Theme.typography.bodySmall.fontFamily, fontSize: 11, color: Theme.colors['gray-500'] }}>Available Capacity</Text>
+                  <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 14, color: Theme.colors.navy }}>{activeTrip.availableWeight} kg Left</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={{ fontFamily: Theme.typography.bodySmall.fontFamily, fontSize: 11, color: Theme.colors['gray-500'] }}>Price per kg</Text>
+                  <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 14, color: '#EA580C' }}>₹ {activeTrip.pricePerKg}</Text>
+                </View>
               </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontFamily: Theme.typography.bodySmall.fontFamily, fontSize: 11, color: Theme.colors['gray-500'] }}>Expected Earnings</Text>
-                <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 14, color: '#EA580C' }}>$ 150.00</Text>
-              </View>
-            </View>
 
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: '40%' }]} />
+              <View style={styles.progressBarBg}>
+                <View style={[styles.progressBarFill, { width: '100%' }]} />
+              </View>
+              
+              <Pressable 
+                style={styles.viewDetailsBtn}
+                onPress={() => router.push({
+                  pathname: '/active-trip-details',
+                  params: { tripId: activeTrip.id }
+                })}
+              >
+                <Text style={styles.viewDetailsText}>View Trip Details</Text>
+              </Pressable>
             </View>
-            
-            <Pressable 
-              style={styles.viewDetailsBtn}
-              onPress={() => router.push('/active-trip-details')}
-            >
-              <Text style={styles.viewDetailsText}>View Trip Details</Text>
-            </Pressable>
-          </View>
+          ) : (
+            <View style={[styles.activeTripCard, { alignItems: 'center', paddingVertical: 24 }]}>
+              <LucidePlaneTakeoff size={40} color={Theme.colors['gray-400']} style={{ marginBottom: 12 }} />
+              <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 16, color: Theme.colors.navy, marginBottom: 4 }}>No Active Trips Registered</Text>
+              <Text style={{ fontFamily: Theme.typography.body.fontFamily, fontSize: 12, color: Theme.colors['gray-500'], textAlign: 'center', paddingHorizontal: 20, marginBottom: 16 }}>
+                Register your upcoming travel capacity to start matching with shippers.
+              </Text>
+              <Pressable 
+                style={[styles.viewDetailsBtn, { backgroundColor: Theme.colors.teal, borderColor: Theme.colors.teal, width: '80%' }]}
+                onPress={() => router.push('/create-trip')}
+              >
+                <Text style={[styles.viewDetailsText, { color: Theme.colors.white }]}>Register a Trip</Text>
+              </Pressable>
+            </View>
+          )}
         </Animated.View>
 
         {/* Top 5 Trips Section */}
@@ -199,33 +312,40 @@ export default function HomeScreen() {
             snapToInterval={width * 0.75 + 16}
             decelerationRate="fast"
           >
-            {[
-              { from: 'Ahmedabad', to: 'London', date: 'Oct 15', price: '$120/kg' },
-              { from: 'Mumbai', to: 'Dubai', date: 'Oct 18', price: '$85/kg' },
-              { from: 'Delhi', to: 'New York', date: 'Oct 20', price: '$150/kg' },
-              { from: 'Bangalore', to: 'Singapore', date: 'Oct 22', price: '$70/kg' },
-              { from: 'Chennai', to: 'Sydney', date: 'Oct 25', price: '$140/kg' },
-            ].map((trip, idx) => (
-              <Animated.View 
-                key={idx} 
-                entering={FadeInRight.delay(700 + (idx * 100))}
-                style={styles.topTripCard}
-              >
-                <View style={styles.topTripRoute}>
-                  <Text style={styles.topTripCity}>{trip.from}</Text>
-                  <LucideNavigation size={14} color={Theme.colors['gray-400']} />
-                  <Text style={styles.topTripCity}>{trip.to}</Text>
-                </View>
-                <View style={styles.topTripDivider} />
-                <View style={styles.topTripDetails}>
-                  <View style={styles.topTripDate}>
-                    <LucideClock size={14} color={Theme.colors.teal} />
-                    <Text style={styles.topTripDateText}>{trip.date}</Text>
+            {loading ? (
+              <View style={[styles.topTripCard, { width: width * 0.75, justifyContent: 'center', alignItems: 'center', minHeight: 120 }]}>
+                <ActivityIndicator size="small" color={Theme.colors.teal} />
+              </View>
+            ) : trendingTrips.length === 0 ? (
+              <View style={[styles.topTripCard, { width: width * 0.75, alignItems: 'center', justifyContent: 'center', minHeight: 120, paddingHorizontal: 16 }]}>
+                <LucidePlaneTakeoff size={32} color={Theme.colors['gray-300']} style={{ marginBottom: 8 }} />
+                <Text style={{ fontFamily: Theme.typography.body.fontFamily, fontSize: 13, color: Theme.colors['gray-500'], textAlign: 'center' }}>No trending trips found</Text>
+              </View>
+            ) : (
+              trendingTrips.map((trip, idx) => (
+                <Animated.View 
+                  key={trip.id} 
+                  entering={FadeInRight.delay(700 + (idx * 100))}
+                  style={styles.topTripCard}
+                >
+                  <View style={styles.topTripRoute}>
+                    <Text style={styles.topTripCity}>{trip.fromCity}</Text>
+                    <LucideNavigation size={14} color={Theme.colors['gray-400']} />
+                    <Text style={styles.topTripCity}>{trip.toCity}</Text>
                   </View>
-                  <Text style={styles.topTripPrice}>{trip.price}</Text>
-                </View>
-              </Animated.View>
-            ))}
+                  <View style={styles.topTripDivider} />
+                  <View style={styles.topTripDetails}>
+                    <View style={styles.topTripDate}>
+                      <LucideClock size={14} color={Theme.colors.teal} />
+                      <Text style={styles.topTripDateText}>
+                        {new Date(trip.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </Text>
+                    </View>
+                    <Text style={styles.topTripPrice}>₹ {trip.pricePerKg}/kg</Text>
+                  </View>
+                </Animated.View>
+              ))
+            )}
           </ScrollView>
         </Animated.View>
 
@@ -288,11 +408,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     position: 'relative',
     marginBottom: Theme.spacing.lg,
-    minHeight: 120,
+    minHeight: isSmallScreen ? 95 : 120,
   },
   greetingTextContainer: {
     flex: 1,
-    paddingRight: 80,
+    paddingRight: isSmallScreen ? 60 : 80,
     justifyContent: 'center',
   },
   greeting: {
@@ -303,17 +423,17 @@ const styles = StyleSheet.create({
   },
   mainTitle: {
     fontFamily: Theme.typography.h1.fontFamily,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: isSmallScreen ? 22 : 28,
+    lineHeight: isSmallScreen ? 28 : 34,
     color: Theme.colors.navy,
     letterSpacing: -0.5,
   },
   girlGraphicContainer: {
     position: 'absolute',
-    right: -20,
+    right: isSmallScreen ? -10 : -20,
     bottom: 0,
-    width: 140,
-    height: 140,
+    width: isSmallScreen ? 110 : 140,
+    height: isSmallScreen ? 110 : 140,
   },
   girlGraphic: {
     width: '100%',
@@ -348,42 +468,42 @@ const styles = StyleSheet.create({
   actionCard: {
     flex: 1,
     backgroundColor: Theme.colors.white,
-    padding: Theme.spacing.lg,
+    padding: isSmallScreen ? Theme.spacing.md : Theme.spacing.lg,
     borderRadius: Theme.borderRadius['2xl'],
     shadowColor: Theme.colors.navy,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 3,
-    minHeight: 180,
+    minHeight: isSmallScreen ? 150 : 180,
     position: 'relative',
     overflow: 'hidden',
   },
   actionCardTitle: {
     fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     color: Theme.colors.navy,
     marginBottom: 4,
   },
   actionCardSubtitle: {
     fontFamily: Theme.typography.bodySmall.fontFamily,
-    fontSize: 12,
+    fontSize: isSmallScreen ? 11 : 12,
     color: Theme.colors['gray-500'],
-    lineHeight: 16,
-    maxWidth: '80%',
+    lineHeight: isSmallScreen ? 15 : 16,
+    maxWidth: '85%',
   },
   actionCardIconWrapper: {
     position: 'absolute',
-    bottom: -10,
-    right: -10,
-    width: 80,
-    height: 80,
+    bottom: isSmallScreen ? -5 : -10,
+    right: isSmallScreen ? -5 : -10,
+    width: isSmallScreen ? 60 : 80,
+    height: isSmallScreen ? 60 : 80,
     justifyContent: 'center',
     alignItems: 'center',
   },
   mockBoxIcon: {
-    width: 50,
-    height: 50,
+    width: isSmallScreen ? 38 : 50,
+    height: isSmallScreen ? 38 : 50,
     backgroundColor: '#34A88C',
     borderRadius: 8,
     transform: [{ rotate: '-15deg' }],

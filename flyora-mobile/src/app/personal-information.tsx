@@ -1,17 +1,85 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Theme } from '../constants/theme';
 import { ArrowLeft, User, Mail, Phone, Lock } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { CustomButton } from '../components/CustomButton';
+import { useAuthStore } from '../store';
+import { apiClient } from '../services/apiClient';
 
 export default function PersonalInformationScreen() {
   const router = useRouter();
-  const [name, setName] = useState('Aakash Patel');
-  const [email, setEmail] = useState('aakashpatel@gmail.com');
-  const [phone, setPhone] = useState('+91 9988776655');
+  const { userId, userRole, profileImageUrl, login: loginUserStore } = useAuthStore();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Load details on mount
+  useEffect(() => {
+    (async () => {
+      if (!userId) return;
+      try {
+        setLoading(true);
+        const res = await apiClient.get(`/api/dashboard/profile/${userId}`);
+        if (res.data && res.data.success && res.data.data) {
+          const profile = res.data.data;
+          setName(profile.fullName || '');
+          setEmail(profile.email || '');
+          setPhone(profile.phone || '');
+        }
+      } catch (e) {
+        console.warn('Failed to load profile details:', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const handleSaveChanges = async () => {
+    if (!name.trim() || !email.trim() || !phone.trim()) {
+      Alert.alert('Missing Fields', 'Name, Email, and Phone number are required.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const payload: any = {
+        fullName: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+      };
+      if (password) {
+        payload.password = password;
+      }
+
+      const res = await apiClient.put(`/api/dashboard/profile/${userId}`, payload);
+      if (res.data && res.data.success) {
+        const updated = res.data.data;
+        // Update local auth store so name/email change is reflected immediately throughout the app
+        await loginUserStore(
+          userId!,
+          updated.fullName,
+          updated.email,
+          userRole || 'user',
+          updated.profileImageUrl || profileImageUrl
+        );
+        Alert.alert('Success', 'Profile updated successfully!');
+        router.back();
+      } else {
+        Alert.alert('Error', res.data.message || 'Failed to update profile.');
+      }
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert('Error', error.response?.data?.message || error.message || 'Failed to update profile.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -27,75 +95,84 @@ export default function PersonalInformationScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <Animated.View entering={FadeInDown.delay(100)} style={styles.formCard}>
-            <Text style={styles.sectionTitle}>Update your details</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <View style={styles.inputContainer}>
-                <User size={20} color={Theme.colors['gray-500']} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Enter your full name"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                />
+        {loading && !name ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={Theme.colors.teal} />
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <Animated.View entering={FadeInDown.delay(100)} style={styles.formCard}>
+              <Text style={styles.sectionTitle}>Update your details</Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Full Name</Text>
+                <View style={styles.inputContainer}>
+                  <User size={20} color={Theme.colors['gray-500']} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Enter your full name"
+                    placeholderTextColor={Theme.colors['gray-400']}
+                  />
+                </View>
               </View>
-            </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputContainer}>
-                <Mail size={20} color={Theme.colors['gray-500']} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Enter your email"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                />
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <View style={styles.inputContainer}>
+                  <Mail size={20} color={Theme.colors['gray-500']} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="Enter your email"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholderTextColor={Theme.colors['gray-400']}
+                  />
+                </View>
               </View>
-            </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
-              <View style={styles.inputContainer}>
-                <Phone size={20} color={Theme.colors['gray-500']} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder="Enter your phone number"
-                  keyboardType="phone-pad"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                />
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Phone Number</Text>
+                <View style={styles.inputContainer}>
+                  <Phone size={20} color={Theme.colors['gray-500']} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={phone}
+                    onChangeText={setPhone}
+                    placeholder="Enter your phone number"
+                    keyboardType="phone-pad"
+                    placeholderTextColor={Theme.colors['gray-400']}
+                  />
+                </View>
               </View>
-            </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputContainer}>
-                <Lock size={20} color={Theme.colors['gray-500']} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  secureTextEntry
-                  placeholder="Enter new password to change"
-                  placeholderTextColor={Theme.colors['gray-400']}
-                />
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputContainer}>
+                  <Lock size={20} color={Theme.colors['gray-500']} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    secureTextEntry
+                    placeholder="Enter new password to change"
+                    placeholderTextColor={Theme.colors['gray-400']}
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                </View>
               </View>
-            </View>
 
-            <CustomButton 
-              title="Save Changes" 
-              onPress={() => router.back()} 
-              style={{ marginTop: 20 }}
-            />
-          </Animated.View>
-        </ScrollView>
+              <CustomButton 
+                title="Save Changes" 
+                onPress={handleSaveChanges} 
+                loading={loading}
+                style={{ marginTop: 20 }}
+              />
+            </Animated.View>
+          </ScrollView>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

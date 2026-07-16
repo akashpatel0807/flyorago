@@ -34,12 +34,15 @@ export default function CreateShipmentScreen() {
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
       selectionLimit: 5 - images.length,
-      quality: 0.5,
+      quality: 0.25,
+      base64: true,
     });
 
     if (!result.canceled && result.assets) {
-      const newUris = result.assets.map(asset => asset.uri);
-      setImages(prev => [...prev, ...newUris].slice(0, 5));
+      const newImages = result.assets.map(asset => 
+        asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri
+      );
+      setImages(prev => [...prev, ...newImages].slice(0, 5));
     }
   };
 

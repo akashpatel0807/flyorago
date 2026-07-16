@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,12 +6,15 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '../../store';
+import { useAuthStore, useToastStore } from '../../store';
+import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   Bell,
@@ -31,7 +34,8 @@ import {
   ShieldCheck,
 } from 'lucide-react-native';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const isSmallScreen = width < 380 || height < 700;
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -45,14 +49,94 @@ const getInitials = (name: string) => {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { userName, userEmail } = useAuthStore();
+  const { userId, userName, userEmail, profileImageUrl, updateProfileImage } = useAuthStore();
+  const showToast = useToastStore((state) => state.showToast);
   
-  // Using a null state for profile image to trigger the fallback logic as requested
-  // In a real app, you would fetch this from your backend
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [stats, setStats] = useState({
+    shipments: 0,
+    trips: 0,
+    rating: '5.0',
+    walletBalance: 0,
+  });
 
   const displayName = userName || 'Aakash Patel';
   const displayEmail = userEmail || 'aakashpatel@gmail.com';
+
+  // Load user profile details and stats on mount
+  useEffect(() => {
+    (async () => {
+      if (!userId) return;
+      try {
+        setLoadingProfile(true);
+        
+        // Fetch profile details
+        const profileRes = await apiClient.get(`/api/dashboard/profile/${userId}`);
+        let ratingVal = '5.0';
+        if (profileRes.data && profileRes.data.success && profileRes.data.data) {
+          await updateProfileImage(profileRes.data.data.profileImageUrl);
+          if (profileRes.data.data.averageRating) {
+            ratingVal = Number(profileRes.data.data.averageRating).toFixed(1);
+          }
+        }
+
+        // Fetch overview stats
+        const overviewRes = await apiClient.get(`/api/dashboard/overview/${userId}`);
+        if (overviewRes.data && overviewRes.data.success && overviewRes.data.data) {
+          const s = overviewRes.data.data.stats;
+          setStats({
+            shipments: s.totalShipmentsCount || 0,
+            trips: s.totalTripsCount || 0,
+            rating: ratingVal,
+            walletBalance: s.walletBalance || 0,
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to fetch profile info and stats on mount:', err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    })();
+  }, [userId]);
+
+  const handleSelectAndUploadImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showToast('Permission to access gallery is required to upload a profile picture.', 'error');
+        return;
+      }
+
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.25, // Optimize and compress
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const base64Img = 'data:image/jpeg;base64,' + result.assets[0].base64;
+        setLoadingProfile(true);
+        
+        const response = await apiClient.put(`/api/dashboard/profile/${userId}`, {
+          profileImageUrl: base64Img
+        });
+
+        if (response.data && response.data.success) {
+          await updateProfileImage(base64Img);
+          showToast('Profile image updated successfully!', 'success');
+        } else {
+          showToast('Failed to upload image.', 'error');
+        }
+      }
+    } catch (error) {
+      console.warn('Error launching image picker / uploading:', error);
+      showToast('Error uploading profile picture.', 'error');
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const renderMenuItem = (
     icon: React.ReactNode, 
@@ -66,9 +150,9 @@ export default function ProfileScreen() {
         <View style={styles.menuIconBox}>
           {icon}
         </View>
-        <View>
-          <Text style={styles.menuItemTitle}>{title}</Text>
-          <Text style={styles.menuItemSubtitle}>{subtitle}</Text>
+        <View style={{ flex: 1, marginRight: 8 }}>
+          <Text style={styles.menuItemTitle} numberOfLines={1}>{title}</Text>
+          <Text style={styles.menuItemSubtitle} numberOfLines={1}>{subtitle}</Text>
         </View>
       </View>
       <View style={styles.menuItemRight}>
@@ -115,10 +199,16 @@ export default function ProfileScreen() {
               </View>
             )}
             
+            {loadingProfile && (
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: isSmallScreen ? 40 : 50, justifyContent: 'center', alignItems: 'center', zIndex: 10 }]}>
+                <ActivityIndicator size="small" color={Theme.colors.white} />
+              </View>
+            )}
+
             {/* Outline ring */}
             <View style={styles.avatarRing} />
 
-            <Pressable style={styles.editBtn}>
+            <Pressable style={styles.editBtn} onPress={handleSelectAndUploadImage} disabled={loadingProfile}>
               <Pencil size={14} color={Theme.colors.white} />
             </Pressable>
           </View>
@@ -141,7 +231,7 @@ export default function ProfileScreen() {
             <View style={styles.statIconBox}>
               <Package size={20} color={Theme.colors.teal} />
             </View>
-            <Text style={styles.statValue}>24</Text>
+            <Text style={styles.statValue}>{stats.shipments}</Text>
             <Text style={styles.statLabel}>Shipments</Text>
           </View>
 
@@ -151,7 +241,7 @@ export default function ProfileScreen() {
             <View style={styles.statIconBox}>
               <Plane size={20} color={Theme.colors.teal} />
             </View>
-            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statValue}>{stats.trips}</Text>
             <Text style={styles.statLabel}>Trips as{'\n'}Traveler</Text>
           </View>
 
@@ -161,7 +251,7 @@ export default function ProfileScreen() {
             <View style={styles.statIconBox}>
               <Star size={20} color={Theme.colors.teal} />
             </View>
-            <Text style={styles.statValue}>4.8</Text>
+            <Text style={styles.statValue}>{stats.rating}</Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
 
@@ -171,7 +261,7 @@ export default function ProfileScreen() {
             <View style={styles.statIconBox}>
               <Wallet size={20} color={Theme.colors.teal} />
             </View>
-            <Text style={styles.statValue}>₹12,450</Text>
+            <Text style={styles.statValue}>₹{stats.walletBalance.toLocaleString('en-IN')}</Text>
             <Text style={styles.statLabel}>Wallet Balance</Text>
           </View>
         </Animated.View>
@@ -227,9 +317,7 @@ export default function ProfileScreen() {
             <Gift size={20} color={Theme.colors.teal} />,
             'Refer & Earn',
             'Invite friends and earn rewards',
-            <View style={styles.earnBadge}>
-              <Text style={styles.earnBadgeText}>Earn ₹500</Text>
-            </View>,
+            undefined,
             () => router.push('/refer-earn')
           )}
           <View style={styles.menuDivider} />
@@ -349,21 +437,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: isSmallScreen ? 80 : 100,
+    height: isSmallScreen ? 80 : 100,
+    borderRadius: isSmallScreen ? 40 : 50,
   },
   avatarFallback: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: isSmallScreen ? 80 : 100,
+    height: isSmallScreen ? 80 : 100,
+    borderRadius: isSmallScreen ? 40 : 50,
     backgroundColor: Theme.colors.teal,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarFallbackText: {
     fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 36,
+    fontSize: isSmallScreen ? 28 : 36,
     color: Theme.colors.white,
   },
   avatarRing: {
@@ -372,7 +460,7 @@ const styles = StyleSheet.create({
     left: -6,
     right: -6,
     bottom: -6,
-    borderRadius: 60,
+    borderRadius: isSmallScreen ? 48 : 60,
     borderWidth: 2,
     borderColor: 'rgba(52, 168, 140, 0.2)', // Light teal ring
   },
@@ -396,14 +484,14 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 22,
+    fontSize: isSmallScreen ? 18 : 22,
     color: Theme.colors.navy,
   },
   emailText: {
     fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     color: Theme.colors['gray-500'],
-    marginBottom: 12,
+    marginBottom: isSmallScreen ? 8 : 12,
   },
   verifiedBadge: {
     flexDirection: 'row',
@@ -423,8 +511,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: Theme.colors.white,
     borderRadius: 20,
-    padding: 16,
-    marginBottom: 24,
+    padding: isSmallScreen ? 12 : 16,
+    marginBottom: isSmallScreen ? 16 : 24,
     shadowColor: Theme.colors.navy,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.05,
@@ -436,13 +524,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statIconBox: {
-    width: 36,
-    height: 36,
+    width: isSmallScreen ? 30 : 36,
+    height: isSmallScreen ? 30 : 36,
     borderRadius: 8,
     backgroundColor: 'rgba(52, 168, 140, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: isSmallScreen ? 8 : 12,
   },
   statValue: {
     fontFamily: Theme.typography.h3.fontFamily,
@@ -481,27 +569,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   menuItemLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
   menuIconBox: {
-    width: 40,
-    height: 40,
+    width: isSmallScreen ? 34 : 40,
+    height: isSmallScreen ? 34 : 40,
     borderRadius: 20,
     backgroundColor: 'rgba(52, 168, 140, 0.08)', // Very light teal
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: isSmallScreen ? 10 : 16,
   },
   menuItemTitle: {
     fontFamily: Theme.typography.bodyMedium.fontFamily,
-    fontSize: 15,
+    fontSize: isSmallScreen ? 14 : 15,
     color: Theme.colors.navy,
     marginBottom: 2,
   },
   menuItemSubtitle: {
     fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 12,
+    fontSize: isSmallScreen ? 11 : 12,
     color: Theme.colors['gray-400'],
   },
   menuItemRight: {
