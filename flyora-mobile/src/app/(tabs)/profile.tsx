@@ -232,10 +232,6 @@ export default function ProfileScreen() {
             <Text style={styles.logoSubtitle}>SHIP SMARTER</Text>
           </View>
         </View>
-        <Pressable onPress={() => router.push('/notifications')}>
-          <Bell size={24} color={Theme.colors.navy} />
-          <View style={styles.notificationDot} />
-        </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
