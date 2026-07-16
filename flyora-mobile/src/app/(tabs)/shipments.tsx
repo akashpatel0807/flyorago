@@ -186,36 +186,50 @@ export default function ShipmentsScreen() {
             colors={['#1E293B', '#0F172A']}
             style={styles.statsCardGradient}
           >
-            <View style={styles.statItem}>
-              <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <Package size={isSmallScreen ? 14 : 18} color="#2DD4BF" />
+            <View style={styles.statsGrid}>
+              <View style={styles.statsGridRow}>
+                <View style={styles.statsGridItem}>
+                  <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                    <Package size={20} color="#2DD4BF" />
+                  </View>
+                  <View style={styles.statsTextColumn}>
+                    <Text style={styles.statValue}>{stats.total}</Text>
+                    <Text style={styles.statLabel}>Total</Text>
+                  </View>
+                </View>
+                <View style={styles.statsGridDivider} />
+                <View style={styles.statsGridItem}>
+                  <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                    <Truck size={20} color="#3B82F6" />
+                  </View>
+                  <View style={styles.statsTextColumn}>
+                    <Text style={styles.statValue}>{stats.inTransit}</Text>
+                    <Text style={styles.statLabel}>In Transit</Text>
+                  </View>
+                </View>
               </View>
-              <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.total}</Text>
-              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]}>Total</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
-            <View style={styles.statItem}>
-              <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <Truck size={isSmallScreen ? 14 : 18} color="#3B82F6" />
+              <View style={styles.statsGridHorizontalDivider} />
+              <View style={styles.statsGridRow}>
+                <View style={styles.statsGridItem}>
+                  <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                    <Package size={20} color="#34A88C" />
+                  </View>
+                  <View style={styles.statsTextColumn}>
+                    <Text style={styles.statValue}>{stats.delivered}</Text>
+                    <Text style={styles.statsLabel}>Delivered</Text>
+                  </View>
+                </View>
+                <View style={styles.statsGridDivider} />
+                <View style={styles.statsGridItem}>
+                  <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                    <XCircle size={20} color="#EF4444" />
+                  </View>
+                  <View style={styles.statsTextColumn}>
+                    <Text style={styles.statValue}>{stats.cancelled}</Text>
+                    <Text style={styles.statsLabel}>Cancelled</Text>
+                  </View>
+                </View>
               </View>
-              <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.inTransit}</Text>
-              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]}>In Transit</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
-            <View style={styles.statItem}>
-              <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <Package size={isSmallScreen ? 14 : 18} color="#34A88C" />
-              </View>
-              <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.delivered}</Text>
-              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]}>Delivered</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
-            <View style={styles.statItem}>
-              <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <XCircle size={isSmallScreen ? 14 : 18} color="#EF4444" />
-              </View>
-              <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.cancelled}</Text>
-              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]}>Cancelled</Text>
             </View>
           </LinearGradient>
         </Animated.View>
@@ -550,40 +564,55 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   statsCardGradient: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: isSmallScreen ? 16 : 20,
+    padding: 16,
   },
-  statItem: {
-    flex: 1,
+  statsGrid: {
+    flexDirection: 'column',
+  },
+  statsGridRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 2,
+    justifyContent: 'space-between',
+  },
+  statsGridItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+  },
+  statsTextColumn: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  statsGridDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  statsGridHorizontalDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginHorizontal: 8,
   },
   statIconBox: {
-    width: isSmallScreen ? 32 : 38,
-    height: isSmallScreen ? 32 : 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
   },
   statValue: {
     fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: isSmallScreen ? 16 : 18,
+    fontSize: 16,
     fontWeight: '800',
+    color: Theme.colors.white,
   },
   statLabel: {
     fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 9,
-    marginTop: 2,
-    textAlign: 'center',
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '700',
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-    alignSelf: 'center',
-    marginHorizontal: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
