@@ -187,47 +187,43 @@ export default function ShipmentsScreen() {
             style={styles.statsCardGradient}
           >
             <View style={styles.statsGrid}>
-              <View style={styles.statsGridRow}>
-                <View style={styles.statsGridItem}>
-                  <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                    <Package size={20} color="#2DD4BF" />
-                  </View>
-                  <View style={styles.statsTextColumn}>
-                    <Text style={styles.statValue}>{stats.total}</Text>
-                    <Text style={styles.statLabel}>Total</Text>
-                  </View>
+              <View style={styles.statsGridItem}>
+                <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                  <Package size={18} color="#2DD4BF" />
                 </View>
-                <View style={styles.statsGridDivider} />
-                <View style={styles.statsGridItem}>
-                  <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                    <Truck size={20} color="#3B82F6" />
-                  </View>
-                  <View style={styles.statsTextColumn}>
-                    <Text style={styles.statValue}>{stats.inTransit}</Text>
-                    <Text style={styles.statLabel}>In Transit</Text>
-                  </View>
+                <View style={styles.statsTextColumn}>
+                  <Text style={styles.statValue}>{stats.total}</Text>
+                  <Text style={styles.statLabel}>Total</Text>
                 </View>
               </View>
-              <View style={styles.statsGridHorizontalDivider} />
-              <View style={styles.statsGridRow}>
-                <View style={styles.statsGridItem}>
-                  <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                    <Package size={20} color="#34A88C" />
-                  </View>
-                  <View style={styles.statsTextColumn}>
-                    <Text style={styles.statValue}>{stats.delivered}</Text>
-                    <Text style={styles.statsLabel}>Delivered</Text>
-                  </View>
+
+              <View style={styles.statsGridItem}>
+                <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                  <Truck size={18} color="#3B82F6" />
                 </View>
-                <View style={styles.statsGridDivider} />
-                <View style={styles.statsGridItem}>
-                  <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                    <XCircle size={20} color="#EF4444" />
-                  </View>
-                  <View style={styles.statsTextColumn}>
-                    <Text style={styles.statValue}>{stats.cancelled}</Text>
-                    <Text style={styles.statsLabel}>Cancelled</Text>
-                  </View>
+                <View style={styles.statsTextColumn}>
+                  <Text style={styles.statValue}>{stats.inTransit}</Text>
+                  <Text style={styles.statLabel}>In Transit</Text>
+                </View>
+              </View>
+
+              <View style={styles.statsGridItem}>
+                <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                  <Package size={18} color="#34A88C" />
+                </View>
+                <View style={styles.statsTextColumn}>
+                  <Text style={styles.statValue}>{stats.delivered}</Text>
+                  <Text style={styles.statLabel}>Delivered</Text>
+                </View>
+              </View>
+
+              <View style={styles.statsGridItem}>
+                <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                  <XCircle size={18} color="#EF4444" />
+                </View>
+                <View style={styles.statsTextColumn}>
+                  <Text style={styles.statValue}>{stats.cancelled}</Text>
+                  <Text style={styles.statLabel}>Cancelled</Text>
                 </View>
               </View>
             </View>
@@ -564,36 +560,23 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   statsCardGradient: {
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   statsGrid: {
-    flexDirection: 'column',
-  },
-  statsGridRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   statsGridItem: {
-    flex: 1,
+    width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
   statsTextColumn: {
     marginLeft: 10,
-    justifyContent: 'center',
-  },
-  statsGridDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  statsGridHorizontalDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginHorizontal: 8,
+    flex: 1,
   },
   statIconBox: {
     width: 36,
