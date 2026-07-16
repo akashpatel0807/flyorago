@@ -188,34 +188,34 @@ export default function ShipmentsScreen() {
           >
             <View style={styles.statItem}>
               <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <Package size={18} color="#2DD4BF" />
+                <Package size={isSmallScreen ? 14 : 18} color="#2DD4BF" />
               </View>
               <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.total}</Text>
-              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]} numberOfLines={1}>Total</Text>
+              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]}>Total</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
             <View style={styles.statItem}>
               <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <Truck size={18} color="#3B82F6" />
+                <Truck size={isSmallScreen ? 14 : 18} color="#3B82F6" />
               </View>
               <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.inTransit}</Text>
-              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]} numberOfLines={1}>In Transit</Text>
+              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]}>In Transit</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
             <View style={styles.statItem}>
               <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <Package size={18} color="#34A88C" />
+                <Package size={isSmallScreen ? 14 : 18} color="#34A88C" />
               </View>
               <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.delivered}</Text>
-              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]} numberOfLines={1}>Delivered</Text>
+              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]}>Delivered</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
             <View style={styles.statItem}>
               <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <XCircle size={18} color="#EF4444" />
+                <XCircle size={isSmallScreen ? 14 : 18} color="#EF4444" />
               </View>
               <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.cancelled}</Text>
-              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]} numberOfLines={1}>Cancelled</Text>
+              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]}>Cancelled</Text>
             </View>
           </LinearGradient>
         </Animated.View>
