@@ -180,42 +180,57 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
 
-        {/* Search Bar */}
-        <Animated.View entering={FadeInDown.delay(300)} style={styles.searchContainer}>
-          <LucideSearch size={20} color={Theme.colors['gray-400']} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Enter delivery location"
-            placeholderTextColor={Theme.colors['gray-400']}
-          />
-          <LucideMapPin size={20} color={Theme.colors['gray-400']} />
-        </Animated.View>
-
         {/* Action Cards */}
         <View style={styles.actionCardsRow}>
-          <Animated.View entering={FadeInDown.delay(400)} style={[styles.actionCard, { marginRight: Theme.spacing.md }]}>
-            <Text style={styles.actionCardTitle}>Post a Shipment</Text>
-            <Text style={styles.actionCardSubtitle}>Send your package with a traveler</Text>
-            <View style={styles.actionCardIconWrapper}>
-              <View style={styles.mockBoxIcon}>
-                <LucidePackage size={isSmallScreen ? 24 : 32} color={Theme.colors.white} />
-              </View>
-            </View>
+          <Animated.View entering={FadeInDown.delay(300)} style={styles.actionCardAnimContainer}>
+            <Pressable 
+              style={({ pressed }) => [
+                styles.actionCardPressable,
+                pressed && styles.cardPressedEffect
+              ]}
+              onPress={() => router.push('/create-shipment')}
+            >
+              <LinearGradient
+                colors={['#0D9488', '#0F766E']}
+                style={styles.actionCardGradient}
+              >
+                <Text style={[styles.actionCardTitle, { color: Theme.colors.white }]}>Post a Shipment</Text>
+                <Text style={[styles.actionCardSubtitle, { color: 'rgba(255, 255, 255, 0.8)' }]}>Send package with traveler</Text>
+                <View style={styles.actionCardIconWrapper}>
+                  <View style={[styles.mockBoxIcon, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+                    <LucidePackage size={isSmallScreen ? 20 : 28} color={Theme.colors.white} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </Pressable>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(500)} style={styles.actionCard}>
-            <Text style={styles.actionCardTitle}>Become a Traveler</Text>
-            <Text style={styles.actionCardSubtitle}>Earn by delivering packages</Text>
-            <View style={styles.actionCardIconWrapper}>
-              <View style={[styles.mockBoxIcon, { backgroundColor: Theme.colors.teal }]}>
-                <LucideBriefcase size={isSmallScreen ? 24 : 32} color={Theme.colors.white} />
-              </View>
-            </View>
+          <Animated.View entering={FadeInDown.delay(400)} style={styles.actionCardAnimContainer}>
+            <Pressable 
+              style={({ pressed }) => [
+                styles.actionCardPressable,
+                pressed && styles.cardPressedEffect
+              ]}
+              onPress={() => router.push('/create-trip')}
+            >
+              <LinearGradient
+                colors={['#1E293B', '#0F172A']}
+                style={styles.actionCardGradient}
+              >
+                <Text style={[styles.actionCardTitle, { color: Theme.colors.white }]}>Become a Traveler</Text>
+                <Text style={[styles.actionCardSubtitle, { color: 'rgba(255, 255, 255, 0.8)' }]}>Earn by delivering packages</Text>
+                <View style={styles.actionCardIconWrapper}>
+                  <View style={[styles.mockBoxIcon, { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]}>
+                    <LucideBriefcase size={isSmallScreen ? 20 : 28} color={Theme.colors.white} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </Pressable>
           </Animated.View>
         </View>
 
         {/* Active Trip Section */}
-        <Animated.View entering={FadeInDown.delay(600)} style={styles.activeTripSection}>
+        <Animated.View entering={FadeInDown.delay(500)} style={styles.activeTripSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Current Active Trip</Text>
             {activeTrip && (
@@ -232,15 +247,33 @@ export default function HomeScreen() {
             </View>
           ) : activeTrip ? (
             <View style={styles.activeTripCard}>
-              <View style={styles.activeTripTop}>
-                <View style={styles.routeContainer}>
-                  <Text style={styles.cityText}>{activeTrip.fromCity}</Text>
-                  <LucideArrowRight size={20} color={Theme.colors.teal} />
-                  <Text style={styles.cityText}>{activeTrip.toCity}</Text>
+              <View style={styles.verticalRouteContainer}>
+                <View style={styles.verticalRouteTimeline}>
+                  <View style={styles.timelineDotActive} />
+                  <View style={styles.timelineDashedLine} />
+                  <View style={[styles.timelineDotActive, { backgroundColor: Theme.colors.teal }]} />
                 </View>
-                <LucidePlaneTakeoff size={24} color={Theme.colors.navy} />
+                <View style={styles.verticalRouteInfo}>
+                  <View style={styles.routePointBox}>
+                    <Text style={styles.routePointLabel}>FROM</Text>
+                    <Text style={styles.routePointText} numberOfLines={4}>
+                      {activeTrip.fromCity}
+                    </Text>
+                  </View>
+                  <View style={[styles.routePointBox, { marginTop: 12 }]}>
+                    <Text style={styles.routePointLabel}>TO</Text>
+                    <Text style={styles.routePointText} numberOfLines={4}>
+                      {activeTrip.toCity}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.flightIconContainer}>
+                  <LucidePlaneTakeoff size={22} color={Theme.colors.teal} />
+                </View>
               </View>
               
+              <View style={styles.activeTripDivider} />
+
               <View style={styles.activeTripStatus}>
                 <View style={styles.statusItem}>
                   <LucideClock size={16} color={Theme.colors['gray-500']} />
@@ -250,18 +283,18 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.statusItem}>
                   <LucideCheckCircle2 size={16} color={Theme.colors.teal} />
-                  <Text style={[styles.statusText, { color: Theme.colors.teal }]}>Active</Text>
+                  <Text style={[styles.statusText, { color: Theme.colors.teal, fontWeight: '700' }]}>Active</Text>
                 </View>
               </View>
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
                 <View>
-                  <Text style={{ fontFamily: Theme.typography.bodySmall.fontFamily, fontSize: 11, color: Theme.colors['gray-500'] }}>Available Capacity</Text>
-                  <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 14, color: Theme.colors.navy }}>{activeTrip.availableWeight} kg Left</Text>
+                  <Text style={{ fontFamily: Theme.typography.bodySmall.fontFamily, fontSize: 11, color: Theme.colors['gray-500'], marginBottom: 2 }}>Available Capacity</Text>
+                  <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 14, color: Theme.colors.navy, fontWeight: '700' }}>{activeTrip.availableWeight} kg Left</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontFamily: Theme.typography.bodySmall.fontFamily, fontSize: 11, color: Theme.colors['gray-500'] }}>Price per kg</Text>
-                  <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 14, color: '#EA580C' }}>₹ {activeTrip.pricePerKg}</Text>
+                  <Text style={{ fontFamily: Theme.typography.bodySmall.fontFamily, fontSize: 11, color: Theme.colors['gray-500'], marginBottom: 2 }}>Price per kg</Text>
+                  <Text style={{ fontFamily: Theme.typography.h3.fontFamily, fontSize: 14, color: '#EA580C', fontWeight: '700' }}>₹ {activeTrip.pricePerKg}</Text>
                 </View>
               </View>
 
@@ -439,74 +472,62 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Theme.colors.white,
-    paddingHorizontal: Theme.spacing.lg,
-    height: 56,
-    borderRadius: Theme.borderRadius['2xl'],
-    shadowColor: Theme.colors.navy,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    marginBottom: Theme.spacing.xl,
-  },
-  searchInput: {
-    flex: 1,
-    height: '100%',
-    fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 14,
-    color: Theme.colors.navy,
-    paddingHorizontal: Theme.spacing.md,
-  },
   actionCardsRow: {
     flexDirection: 'row',
     marginBottom: Theme.spacing.xl,
+    gap: Theme.spacing.md,
   },
-  actionCard: {
+  actionCardAnimContainer: {
     flex: 1,
-    backgroundColor: Theme.colors.white,
-    padding: isSmallScreen ? Theme.spacing.md : Theme.spacing.lg,
-    borderRadius: Theme.borderRadius['2xl'],
+    height: isSmallScreen ? 140 : 160,
+    borderRadius: 20,
+    overflow: 'hidden',
     shadowColor: Theme.colors.navy,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    minHeight: isSmallScreen ? 150 : 180,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  actionCardPressable: {
+    flex: 1,
+    height: '100%',
+  },
+  cardPressedEffect: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  actionCardGradient: {
+    flex: 1,
+    padding: Theme.spacing.lg,
+    justifyContent: 'space-between',
     position: 'relative',
     overflow: 'hidden',
   },
   actionCardTitle: {
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: isSmallScreen ? 14 : 16,
-    color: Theme.colors.navy,
-    marginBottom: 4,
+    fontWeight: '800',
   },
   actionCardSubtitle: {
     fontFamily: Theme.typography.bodySmall.fontFamily,
     fontSize: isSmallScreen ? 11 : 12,
-    color: Theme.colors['gray-500'],
-    lineHeight: isSmallScreen ? 15 : 16,
+    lineHeight: isSmallScreen ? 14 : 16,
     maxWidth: '85%',
   },
   actionCardIconWrapper: {
     position: 'absolute',
-    bottom: isSmallScreen ? -5 : -10,
-    right: isSmallScreen ? -5 : -10,
-    width: isSmallScreen ? 60 : 80,
-    height: isSmallScreen ? 60 : 80,
+    bottom: -8,
+    right: -8,
+    width: 60,
+    height: 60,
     justifyContent: 'center',
     alignItems: 'center',
   },
   mockBoxIcon: {
-    width: isSmallScreen ? 38 : 50,
-    height: isSmallScreen ? 38 : 50,
-    backgroundColor: '#34A88C',
-    borderRadius: 8,
-    transform: [{ rotate: '-15deg' }],
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    transform: [{ rotate: '-12deg' }],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -517,17 +538,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Theme.spacing.lg,
+    marginBottom: Theme.spacing.md,
   },
   sectionTitle: {
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 18,
+    fontWeight: '800',
     color: Theme.colors.navy,
   },
   seeAllText: {
     fontFamily: Theme.typography.bodyMedium.fontFamily,
     fontSize: 14,
     color: Theme.colors.teal,
+    fontWeight: '700',
   },
   activeTripSection: {
     marginBottom: Theme.spacing.xl,
@@ -551,34 +574,77 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 10,
     color: '#EF4444',
+    fontWeight: '800',
   },
   activeTripCard: {
     backgroundColor: Theme.colors.white,
-    borderRadius: Theme.borderRadius['2xl'],
+    borderRadius: 24,
     padding: Theme.spacing.lg,
-    shadowColor: Theme.colors.teal,
+    shadowColor: Theme.colors.navy,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(13, 148, 136, 0.1)',
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 4,
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 148, 136, 0.08)',
   },
-  activeTripTop: {
+  verticalRouteContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'flex-start',
+    paddingVertical: 4,
+    position: 'relative',
   },
-  routeContainer: {
-    flexDirection: 'row',
+  verticalRouteTimeline: {
     alignItems: 'center',
-    gap: 12,
+    width: 16,
+    marginRight: 12,
+    height: '100%',
+    paddingTop: 6,
   },
-  cityText: {
+  timelineDotActive: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Theme.colors.navy,
+  },
+  timelineDashedLine: {
+    width: 2,
+    height: 36,
+    marginVertical: 4,
+    backgroundColor: Theme.colors['gray-200'],
+  },
+  verticalRouteInfo: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  routePointBox: {
+    justifyContent: 'center',
+  },
+  routePointLabel: {
+    fontSize: 9,
+    fontFamily: Theme.typography.h3.fontFamily,
+    color: Theme.colors['gray-400'],
+    letterSpacing: 1,
+    marginBottom: 2,
+    fontWeight: '800',
+  },
+  routePointText: {
+    fontSize: 16,
     fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 18,
     color: Theme.colors.navy,
+    lineHeight: 20,
+    fontWeight: '800',
+  },
+  flightIconContainer: {
+    position: 'absolute',
+    right: 0,
+    top: 4,
+    padding: 6,
+  },
+  activeTripDivider: {
+    height: 1,
+    backgroundColor: Theme.colors['gray-100'],
+    marginVertical: 14,
   },
   activeTripStatus: {
     flexDirection: 'row',
@@ -608,15 +674,18 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   viewDetailsBtn: {
-    backgroundColor: '#F0F9F8',
-    paddingVertical: 12,
-    borderRadius: 12,
+    backgroundColor: '#F0FDFA', // Light teal background
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
   },
   viewDetailsText: {
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 14,
     color: Theme.colors.teal,
+    fontWeight: '800',
   },
   topTripsSection: {
     marginBottom: Theme.spacing.xl,
@@ -626,17 +695,17 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   topTripCard: {
-    width: width * 0.75,
+    width: width * 0.72,
     backgroundColor: Theme.colors.white,
-    borderRadius: Theme.borderRadius.xl,
-    padding: Theme.spacing.md,
+    borderRadius: 20,
+    padding: Theme.spacing.lg,
     shadowColor: Theme.colors.navy,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowRadius: 12,
+    elevation: 3,
     borderWidth: 1,
-    borderColor: Theme.colors['gray-100'],
+    borderColor: 'rgba(15, 23, 42, 0.06)',
   },
   topTripRoute: {
     flexDirection: 'row',
@@ -648,6 +717,8 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 15,
     color: Theme.colors.navy,
+    fontWeight: '800',
+    flex: 1,
   },
   topTripDivider: {
     height: 1,
@@ -664,7 +735,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#F0F9F8',
+    backgroundColor: '#F0FDFA',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -673,10 +744,12 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.bodyMedium.fontFamily,
     fontSize: 12,
     color: Theme.colors.teal,
+    fontWeight: '700',
   },
   topTripPrice: {
     fontFamily: Theme.typography.h2.fontFamily,
     fontSize: 16,
     color: Theme.colors.navy,
+    fontWeight: '800',
   },
 });
