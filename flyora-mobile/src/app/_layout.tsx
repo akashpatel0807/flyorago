@@ -9,7 +9,7 @@ import {
   Poppins_900Black,
 } from '@expo-google-fonts/poppins';
 import { useColorScheme } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -36,7 +36,11 @@ export default function RootLayout() {
   const scheme = useColorScheme();
   const initializeAuth = useAuthStore((state) => state.initialize);
   const authLoading = useAuthStore((state) => state.isLoading);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isSplashAnimationComplete, setIsSplashAnimationComplete] = useState(false);
+
+  const segments = useSegments();
+  const router = useRouter();
 
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -67,6 +71,26 @@ export default function RootLayout() {
     }
   }, [initializeAuth, fontsLoaded]);
 
+  // Secure Auth Route Guard
+  useEffect(() => {
+    if (authLoading || !fontsLoaded) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+    const isAdminGroup = segments[0] === 'admin';
+    const isLandingOrOnboarding = segments.length === 0 || segments[0] === 'index' || segments[0] === 'onboarding';
+    const isPublicRoute = segments[0] === 'terms' || segments[0] === 'privacy';
+
+    if (!isAuthenticated) {
+      if (!inAuthGroup && !isLandingOrOnboarding && !isAdminGroup && !isPublicRoute) {
+        router.replace('/(auth)/login');
+      }
+    } else {
+      if (inAuthGroup) {
+        router.replace('/(tabs)');
+      }
+    }
+  }, [isAuthenticated, authLoading, fontsLoaded, segments]);
+
   // Do not return null here, Expo Router needs the Stack to mount.
   // The splash screen prevents the user from seeing the initial unauthenticated state.
 
@@ -93,6 +117,8 @@ export default function RootLayout() {
             <Stack.Screen name="settings-preferences" />
             <Stack.Screen name="find-traveller" />
             <Stack.Screen name="package-details" />
+            <Stack.Screen name="terms" />
+            <Stack.Screen name="privacy" />
           </Stack>
           <AnimatedToast />
           

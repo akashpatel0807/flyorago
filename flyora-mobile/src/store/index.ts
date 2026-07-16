@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { apiClient } from '../services/apiClient';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -8,13 +9,15 @@ interface AuthState {
   userName: string | null;
   userEmail: string | null;
   userRole: string | null;
+  profileImageUrl: string | null;
   adminToken: string | null;
   adminUsername: string | null;
   isLoading: boolean;
   hasSeenOnboarding: boolean;
   
   initialize: () => Promise<void>;
-  login: (userId: string, userName: string, userEmail: string, userRole: string) => Promise<void>;
+  login: (userId: string, userName: string, userEmail: string, userRole: string, profileImageUrl?: string | null) => Promise<void>;
+  updateProfileImage: (url: string | null) => Promise<void>;
   adminLogin: (token: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
   adminLogout: () => Promise<void>;
@@ -28,6 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   userName: null,
   userEmail: null,
   userRole: null,
+  profileImageUrl: null,
   adminToken: null,
   adminUsername: null,
   isLoading: true,
@@ -43,11 +47,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       const adminUsername = await SecureStore.getItemAsync('flyora_admin_username');
       const onboardingCompleted = await SecureStore.getItemAsync('flyora_has_seen_onboarding');
 
+      // Fetch profile image from backend asynchronously if logged in to avoid blocking splash screen
+      let profileImageUrl = null;
+
       set({
         userId,
         userName,
         userEmail,
         userRole,
+        profileImageUrl,
         isAuthenticated: !!userId,
         adminToken,
         adminUsername,
@@ -55,13 +63,24 @@ export const useAuthStore = create<AuthState>((set) => ({
         hasSeenOnboarding: onboardingCompleted === 'true',
         isLoading: false,
       });
+
+      // Lazy-load profile details in the background if we have a session
+      if (userId) {
+        apiClient.get(`/api/dashboard/profile/${userId}`).then((res) => {
+          if (res.data && res.data.success && res.data.data) {
+            set({ profileImageUrl: res.data.data.profileImageUrl });
+          }
+        }).catch((e) => {
+          console.warn('Failed to lazy-load profile details on initialization:', e);
+        });
+      }
     } catch (error) {
       console.error('Failed to initialize auth store:', error);
       set({ isLoading: false });
     }
   },
 
-  login: async (userId, userName, userEmail, userRole) => {
+  login: async (userId, userName, userEmail, userRole, profileImageUrl) => {
     try {
       await SecureStore.setItemAsync('flyora_user_id', userId);
       await SecureStore.setItemAsync('flyora_user_name', userName);
@@ -73,10 +92,19 @@ export const useAuthStore = create<AuthState>((set) => ({
         userName,
         userEmail,
         userRole,
+        profileImageUrl: profileImageUrl || null,
         isAuthenticated: true,
       });
     } catch (error) {
       console.error('Failed to store user auth details:', error);
+    }
+  },
+
+  updateProfileImage: async (url) => {
+    try {
+      set({ profileImageUrl: url });
+    } catch (error) {
+      console.error('Failed to update profile image in store:', error);
     }
   },
 
@@ -107,6 +135,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         userName: null,
         userEmail: null,
         userRole: null,
+        profileImageUrl: null,
         isAuthenticated: false,
       });
     } catch (error) {
