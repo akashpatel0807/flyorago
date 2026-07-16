@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
   },
   statsTextColumn: {
     marginLeft: 10,
-    flex: 1,
+    justifyContent: 'center',
   },
   statsGridDivider: {
     width: 1,
