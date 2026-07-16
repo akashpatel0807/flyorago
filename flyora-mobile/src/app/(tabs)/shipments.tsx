@@ -19,6 +19,7 @@ import { useAuthStore } from '../../store';
 import { apiClient } from '../../services/apiClient';
 import { Theme } from '../../constants/theme';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import {
   Search,
@@ -32,6 +33,9 @@ import {
   Edit2,
   Trash2,
 } from 'lucide-react-native';
+
+const { width, height } = Dimensions.get('window');
+const isSmallScreen = width < 380 || height < 700;
 
 const FILTER_TABS = ['All', 'In Transit', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
@@ -177,48 +181,61 @@ export default function ShipmentsScreen() {
 
 
         {/* Stats Card */}
-        <Animated.View entering={FadeInDown.delay(100)} style={styles.statsCard}>
-          <View style={styles.statItem}>
-            <View style={[styles.statIconBox, { backgroundColor: '#E6F4F1' }]}>
-              <Package size={18} color={Theme.colors.teal} />
+        <Animated.View entering={FadeInDown.delay(100)} style={styles.statsCardContainer}>
+          <LinearGradient
+            colors={['#1E293B', '#0F172A']}
+            style={styles.statsCardGradient}
+          >
+            <View style={styles.statItem}>
+              <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                <Package size={18} color="#2DD4BF" />
+              </View>
+              <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.total}</Text>
+              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]} numberOfLines={1}>Total</Text>
             </View>
-            <Text style={styles.statValue}>{stats.total}</Text>
-            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Total</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <View style={[styles.statIconBox, { backgroundColor: '#EFF6FF' }]}>
-              <Truck size={18} color="#3B82F6" />
+            <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
+            <View style={styles.statItem}>
+              <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                <Truck size={18} color="#3B82F6" />
+              </View>
+              <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.inTransit}</Text>
+              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]} numberOfLines={1}>In Transit</Text>
             </View>
-            <Text style={styles.statValue}>{stats.inTransit}</Text>
-            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>In Transit</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <View style={[styles.statIconBox, { backgroundColor: '#FEF3C7' }]}>
-              <Package size={18} color="#F59E0B" />
+            <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
+            <View style={styles.statItem}>
+              <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                <Package size={18} color="#34A88C" />
+              </View>
+              <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.delivered}</Text>
+              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]} numberOfLines={1}>Delivered</Text>
             </View>
-            <Text style={styles.statValue}>{stats.delivered}</Text>
-            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Delivered</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <View style={[styles.statIconBox, { backgroundColor: '#FEE2E2' }]}>
-              <XCircle size={18} color="#EF4444" />
+            <View style={[styles.statDivider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
+            <View style={styles.statItem}>
+              <View style={[styles.statIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
+                <XCircle size={18} color="#EF4444" />
+              </View>
+              <Text style={[styles.statValue, { color: Theme.colors.white }]}>{stats.cancelled}</Text>
+              <Text style={[styles.statLabel, { color: 'rgba(255, 255, 255, 0.6)' }]} numberOfLines={1}>Cancelled</Text>
             </View>
-            <Text style={styles.statValue}>{stats.cancelled}</Text>
-            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Cancelled</Text>
-          </View>
+          </LinearGradient>
         </Animated.View>
 
         {/* Create Request Prominent Button */}
-        <Animated.View entering={FadeInDown.delay(150)} style={{ marginHorizontal: 20, marginBottom: 24 }}>
-          <TouchableOpacity 
-            style={[styles.createRequestBtn, { width: '100%', alignItems: 'center', paddingVertical: 16, backgroundColor: Theme.colors.teal }]}
+        <Animated.View entering={FadeInDown.delay(150)} style={styles.createBtnAnimWrapper}>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.createBtnPressable,
+              pressed && styles.cardPressedEffect
+            ]}
             onPress={() => router.push('/create-shipment')}
           >
-            <Text style={[styles.createRequestText, { fontSize: 16 }]}>+ Create New Request</Text>
-          </TouchableOpacity>
+            <LinearGradient
+              colors={['#0D9488', '#0F766E']}
+              style={styles.createBtnGradient}
+            >
+              <Text style={styles.createBtnText}>+ Create New Request</Text>
+            </LinearGradient>
+          </Pressable>
         </Animated.View>
 
         {/* Recent Shipments Title */}
@@ -449,30 +466,43 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: Theme.typography.h1.fontFamily,
-    fontSize: 24,
+    fontSize: isSmallScreen ? 20 : 24,
     color: Theme.colors.navy,
     marginBottom: 4,
   },
   headerSubtitle: {
     fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     color: Theme.colors['gray-500'],
   },
-  createRequestBtn: {
-    backgroundColor: Theme.colors.navy,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    shadowColor: Theme.colors.navy,
-    shadowOffset: { width: 0, height: 4 },
+  createBtnAnimWrapper: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: Theme.colors.teal,
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 4,
   },
-  createRequestText: {
+  createBtnPressable: {
+    width: '100%',
+  },
+  createBtnGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createBtnText: {
     fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 14,
+    fontSize: 16,
     color: Theme.colors.white,
+    fontWeight: '800',
+  },
+  cardPressedEffect: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   scrollContent: {
     paddingBottom: 120, // space for tab bar
@@ -507,20 +537,22 @@ const styles = StyleSheet.create({
     color: Theme.colors.white,
     fontWeight: '600',
   },
-  statsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: Theme.colors.white,
+  statsCardContainer: {
     marginHorizontal: 20,
     marginTop: 10,
-    marginBottom: 24,
-    borderRadius: 20,
-    padding: 16,
+    marginBottom: isSmallScreen ? 16 : 24,
+    borderRadius: 24,
+    overflow: 'hidden',
     shadowColor: Theme.colors.navy,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  statsCardGradient: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: isSmallScreen ? 16 : 20,
   },
   statItem: {
     flex: 1,
@@ -528,8 +560,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   statIconBox: {
-    width: 36,
-    height: 36,
+    width: isSmallScreen ? 32 : 38,
+    height: isSmallScreen ? 32 : 38,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -537,20 +569,19 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 18,
-    color: Theme.colors.navy,
+    fontSize: isSmallScreen ? 16 : 18,
+    fontWeight: '800',
   },
   statLabel: {
     fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 10,
-    color: Theme.colors['gray-500'],
+    fontSize: 9,
     marginTop: 2,
     textAlign: 'center',
+    fontWeight: '700',
   },
   statDivider: {
     width: 1,
-    height: 40,
-    backgroundColor: Theme.colors['gray-100'],
+    height: 32,
     alignSelf: 'center',
     marginHorizontal: 4,
   },
@@ -563,18 +594,26 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '800',
     color: Theme.colors.navy,
   },
   filterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Theme.colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Theme.colors['gray-200'],
+    gap: 6,
   },
   filterBtnText: {
-    fontFamily: Theme.typography.body.fontFamily,
+    fontFamily: Theme.typography.bodyMedium.fontFamily,
     fontSize: 13,
-    color: Theme.colors['gray-500'],
-    marginRight: 4,
+    color: Theme.colors['gray-600'],
+    fontWeight: '700',
   },
   emptyState: {
     alignItems: 'center',
@@ -613,22 +652,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: Theme.colors.white,
     marginHorizontal: 20,
-    marginBottom: 12,
-    borderRadius: 16,
-    padding: 12,
+    marginBottom: 16,
+    borderRadius: 24,
+    padding: 16,
     shadowColor: Theme.colors.navy,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: Theme.colors['gray-100'],
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(15, 23, 42, 0.05)',
   },
   shipmentImageContainer: {
-    width: 64,
-    height: 64,
-    marginRight: 12,
-    borderRadius: 12,
+    width: 72,
+    height: 72,
+    marginRight: 14,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#F3F4F6',
   },
@@ -645,7 +684,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   idRow: {
     flexDirection: 'row',
@@ -656,6 +695,7 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.h3.fontFamily,
     fontSize: 13,
     color: Theme.colors.navy,
+    fontWeight: '800',
     flexShrink: 1,
   },
   statusPill: {
@@ -668,16 +708,20 @@ const styles = StyleSheet.create({
   statusText: {
     fontFamily: Theme.typography.bodyMedium.fontFamily,
     fontSize: 10,
+    fontWeight: '700',
   },
   routeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    flexWrap: 'wrap',
+    marginVertical: 4,
+    gap: 4,
   },
   cityText: {
     fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 14,
+    fontSize: 15,
     color: Theme.colors.navy,
+    fontWeight: '800',
     flexShrink: 1,
   },
   metaText: {
@@ -686,11 +730,10 @@ const styles = StyleSheet.create({
     color: Theme.colors['gray-500'],
     marginBottom: 8,
   },
-
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
     marginTop: 4,
   },
   statusFooterText: {
@@ -706,8 +749,9 @@ const styles = StyleSheet.create({
   },
   priceText: {
     fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 15,
-    color: Theme.colors.navy,
+    fontSize: 16,
+    color: Theme.colors.teal,
+    fontWeight: '800',
   },
   timeText: {
     fontFamily: Theme.typography.body.fontFamily,
@@ -723,30 +767,30 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   promoContent: {
-    padding: 20,
+    padding: isSmallScreen ? 14 : 20,
   },
   promoTitle: {
     fontFamily: Theme.typography.h2.fontFamily,
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     color: Theme.colors.white,
     marginBottom: 4,
   },
   promoSubtitle: {
     fontFamily: Theme.typography.body.fontFamily,
-    fontSize: 12,
+    fontSize: isSmallScreen ? 11 : 12,
     color: 'rgba(255,255,255,0.8)',
-    marginBottom: 16,
+    marginBottom: isSmallScreen ? 10 : 16,
   },
   promoBtn: {
     backgroundColor: Theme.colors.white,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: isSmallScreen ? 14 : 20,
+    paddingVertical: isSmallScreen ? 6 : 8,
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
   promoBtnText: {
     fontFamily: Theme.typography.h3.fontFamily,
-    fontSize: 13,
+    fontSize: isSmallScreen ? 12 : 13,
     color: Theme.colors.teal,
   },
   modalOverlay: {
