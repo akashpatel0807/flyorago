@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Theme } from '../constants/theme';
 import { ArrowLeft, CheckCircle2, Package, Clock, ShieldAlert, CreditCard } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight, Layout } from 'react-native-reanimated';
+import { useAuthStore } from '../store';
+import { apiClient } from '../services/apiClient';
 
 const { width } = Dimensions.get('window');
 
@@ -64,16 +66,53 @@ const initialNotifications: Notification[] = [
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { userId } = useAuthStore();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchNotifications = async () => {
+    if (!userId) return;
+    try {
+      const res = await apiClient.get(`/api/dashboard/notifications/${userId}`);
+      if (res.data && res.data.success) {
+        setNotifications(res.data.data.map((n: any) => ({
+          id: String(n.id),
+          title: n.title,
+          message: n.message,
+          time: new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ', ' + new Date(n.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          type: n.type as NotificationType,
+          isRead: n.isRead
+        })));
+      }
+    } catch (err) {
+      console.warn('Error fetching notifications:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [userId]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+  const markAllAsRead = async () => {
+    try {
+      await apiClient.post('/api/dashboard/notifications/mark-read', { userId });
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.warn('Error marking all notifications read:', err);
+    }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+  const markAsRead = async (id: string) => {
+    try {
+      await apiClient.post('/api/dashboard/notifications/mark-read', { notificationId: id });
+      setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (err) {
+      console.warn('Error marking notification read:', err);
+    }
   };
 
   const getIcon = (type: NotificationType) => {
@@ -118,41 +157,49 @@ export default function NotificationsScreen() {
           <Text style={styles.summarySubtitle}>Stay updated on your shipments and trips in real-time.</Text>
         </View>
 
-        {notifications.map((notification, index) => (
-          <Animated.View 
-            key={notification.id}
-            entering={FadeInRight.delay(index * 100).springify()}
-            layout={Layout.springify()}
-          >
-            <Pressable 
-              style={[styles.notificationCard, !notification.isRead && styles.unreadCard]}
-              onPress={() => markAsRead(notification.id)}
-            >
-              <View style={[styles.iconWrapper, { backgroundColor: getIconBgColor(notification.type) }]}>
-                {getIcon(notification.type)}
-              </View>
-              
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <Text style={[styles.title, !notification.isRead && styles.unreadTitle]} numberOfLines={1}>
-                    {notification.title}
-                  </Text>
-                  <Text style={styles.time}>{notification.time}</Text>
-                </View>
-                <Text style={styles.message} numberOfLines={2}>{notification.message}</Text>
-              </View>
-              
-              {!notification.isRead && <View style={styles.unreadDot} />}
-            </Pressable>
-          </Animated.View>
-        ))}
-        
-        {notifications.length === 0 && (
-          <View style={styles.emptyState}>
-            <Clock size={48} color={Theme.colors['gray-300']} />
-            <Text style={styles.emptyTitle}>No Notifications Yet</Text>
-            <Text style={styles.emptySubtitle}>When you get updates, they'll appear here.</Text>
+        {loading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+            <ActivityIndicator size="large" color={Theme.colors.teal} />
           </View>
+        ) : (
+          <>
+            {notifications.map((notification, index) => (
+              <Animated.View 
+                key={notification.id}
+                entering={FadeInRight.delay(index * 100).springify()}
+                layout={Layout.springify()}
+              >
+                <Pressable 
+                  style={[styles.notificationCard, !notification.isRead && styles.unreadCard]}
+                  onPress={() => markAsRead(notification.id)}
+                >
+                  <View style={[styles.iconWrapper, { backgroundColor: getIconBgColor(notification.type) }]}>
+                    {getIcon(notification.type)}
+                  </View>
+                  
+                  <View style={styles.cardContent}>
+                    <View style={styles.cardHeader}>
+                      <Text style={[styles.title, !notification.isRead && styles.unreadTitle]} numberOfLines={1}>
+                        {notification.title}
+                      </Text>
+                      <Text style={styles.time}>{notification.time}</Text>
+                    </View>
+                    <Text style={styles.message} numberOfLines={2}>{notification.message}</Text>
+                  </View>
+                  
+                  {!notification.isRead && <View style={styles.unreadDot} />}
+                </Pressable>
+              </Animated.View>
+            ))}
+            
+            {notifications.length === 0 && (
+              <View style={styles.emptyState}>
+                <Clock size={48} color={Theme.colors['gray-300']} />
+                <Text style={styles.emptyTitle}>No Notifications Yet</Text>
+                <Text style={styles.emptySubtitle}>When you get updates, they'll appear here.</Text>
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

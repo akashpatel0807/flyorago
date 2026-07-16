@@ -32,6 +32,9 @@ import {
   ChevronRight,
   Pencil,
   ShieldCheck,
+  Clock,
+  AlertCircle,
+  Shield,
 } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -53,6 +56,7 @@ export default function ProfileScreen() {
   const showToast = useToastStore((state) => state.showToast);
   
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [kycStatus, setKycStatus] = useState<string>('NOT_SUBMITTED');
   const [stats, setStats] = useState({
     shipments: 0,
     trips: 0,
@@ -75,6 +79,7 @@ export default function ProfileScreen() {
         let ratingVal = '5.0';
         if (profileRes.data && profileRes.data.success && profileRes.data.data) {
           await updateProfileImage(profileRes.data.data.profileImageUrl);
+          setKycStatus(profileRes.data.data.kycStatus || 'NOT_SUBMITTED');
           if (profileRes.data.data.averageRating) {
             ratingVal = Number(profileRes.data.data.averageRating).toFixed(1);
           }
@@ -162,6 +167,52 @@ export default function ProfileScreen() {
     </Pressable>
   );
 
+  const renderKycBadge = () => {
+    switch (kycStatus) {
+      case 'APPROVED':
+        return (
+          <Pressable 
+            style={[styles.verifiedBadge, { backgroundColor: '#E6F4F1', borderColor: Theme.colors.teal, borderWidth: 1 }]}
+            onPress={() => router.push('/kyc')}
+          >
+            <ShieldCheck size={14} color={Theme.colors.teal} style={{ marginRight: 6 }} />
+            <Text style={[styles.verifiedText, { color: Theme.colors.teal }]}>Verified KYC</Text>
+          </Pressable>
+        );
+      case 'PENDING':
+        return (
+          <Pressable 
+            style={[styles.verifiedBadge, { backgroundColor: '#FFFBEB', borderColor: '#D97706', borderWidth: 1 }]}
+            onPress={() => router.push('/kyc')}
+          >
+            <Clock size={14} color="#D97706" style={{ marginRight: 6 }} />
+            <Text style={[styles.verifiedText, { color: '#D97706' }]}>KYC Pending</Text>
+          </Pressable>
+        );
+      case 'REJECTED':
+        return (
+          <Pressable 
+            style={[styles.verifiedBadge, { backgroundColor: '#FEE2E2', borderColor: '#EF4444', borderWidth: 1 }]}
+            onPress={() => router.push('/kyc')}
+          >
+            <AlertCircle size={14} color="#EF4444" style={{ marginRight: 6 }} />
+            <Text style={[styles.verifiedText, { color: '#EF4444' }]}>KYC Rejected</Text>
+          </Pressable>
+        );
+      case 'NOT_SUBMITTED':
+      default:
+        return (
+          <Pressable 
+            style={[styles.verifiedBadge, { backgroundColor: '#F3F4F6', borderColor: '#4B5563', borderWidth: 1 }]}
+            onPress={() => router.push('/kyc')}
+          >
+            <Shield size={14} color="#4B5563" style={{ marginRight: 6 }} />
+            <Text style={[styles.verifiedText, { color: '#4B5563' }]}>KYC Not Submitted</Text>
+          </Pressable>
+        );
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'top']}>
       {/* Background Graphic */}
@@ -219,10 +270,7 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.emailText}>{displayEmail}</Text>
 
-          <View style={styles.verifiedBadge}>
-            <ShieldCheck size={14} color={Theme.colors.teal} style={{ marginRight: 6 }} />
-            <Text style={styles.verifiedText}>Verified Traveler</Text>
-          </View>
+          {renderKycBadge()}
         </Animated.View>
 
         {/* Stats Card */}
